@@ -1,6 +1,6 @@
 {
-  "name": "Palomas Pro",
-  "short_name": "Palomas Pro",
+  "name": "My Pigeons",
+  "short_name": "My Pigeons",
   "description": "Gestión de palomas y pedigrí",
   "start_url": "./",
   "scope": "./",
