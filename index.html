@@ -2847,7 +2847,7 @@ if (window.Android) {
 });
 
 // --- LÓGICA DE BACKUP/RESTORE ---
-function exportData() {
+async function exportData() {
     if (pigeons.length === 0) {
         // [MODIFICACIÓN] Adaptar mensaje para entorno Android
         if (window.Android) {
@@ -2876,18 +2876,35 @@ function exportData() {
     }
     // ** FIN LÓGICA NATIVA **
 
-    // Fallback para Navegadores Web Estándar (lo que ya tenías)
-    const blob = new Blob([dataStr], { type: mimeType });
-    const reader = new FileReader();
-    reader.onload = function(event) {
-        const dataUrl = event.target.result;
+    // Compartir el archivo directamente desde el gesto del usuario (iOS/PWA).
+    try {
+        const file = new File([dataStr], fileName, { type: mimeType });
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+                await navigator.share({ files: [file] });
+                showToast("Copia de seguridad compartida. Si elegiste Guardar en Archivos, estará en la carpeta seleccionada.", "success");
+            } catch (error) {
+                if (error.name !== "AbortError") {
+                    showToast("No se pudo compartir la copia de seguridad. Inténtalo de nuevo.", "error");
+                }
+            }
+            return;
+        }
+
+        // Descarga para navegadores sin soporte para compartir archivos.
+        const blob = new Blob([dataStr], { type: mimeType });
+        const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.download = fileName;
-        link.href = dataUrl;
+        link.href = url;
+        document.body.appendChild(link);
         link.click();
-    };
-    reader.readAsDataURL(blob);
-    showToast(`Copia de seguridad de ${pigeons.length} palomas exportada correctamente.`, "success");
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+        showToast("Descarga de la copia de seguridad iniciada. Revisa las descargas de tu navegador.", "success");
+    } catch (error) {
+        showToast("No se pudo exportar la copia de seguridad. Inténtalo de nuevo.", "error");
+    }
 }
 
     // [INICIO DE LAS MODIFICACIONES DE IMPORTACIÓN]
