@@ -3947,11 +3947,29 @@ function downloadPedigreeImage() {
             }
             // ** FIN LÓGICA NATIVA **
             
-            // 7. Fallback para Navegadores Web Estándar
-            const link = document.createElement('a');
-            link.download = fileName;
-            link.href = dataURL;
-            link.click();
+            // Compartir archivo real en PWA (iOS/Android) y descarga en navegador.
+            canvas.toBlob(async blob => {
+                if (!blob) { showToast('No se pudo crear el archivo PNG.', 'error'); return; }
+                const file = new File([blob], fileName, { type: 'image/png' });
+                const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+                if (isStandalone && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    try {
+                        await navigator.share({ files: [file], title: 'Pedigrí' });
+                        return;
+                    } catch (err) {
+                        if (err.name === 'AbortError') return;
+                        console.warn('Compartir archivo:', err);
+                    }
+                }
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 60000);
+            }, 'image/png');
         }).catch(err => {
             // 8. Asegurar la restauración de estilos en caso de error
             pedigreeTreeWrapper.style.transform = currentScaleTransform;
