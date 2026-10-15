@@ -3871,131 +3871,108 @@ function buildDetailsContent(p) {
     });
     
 // --- FUNCIÓN CORREGIDA para descargar el pedigrí como imagen ---
-function downloadPedigreeImage() {
-    const captureElement = document.getElementById('captureArea');
-    const pedigreeTreeWrapper = document.getElementById('pedigreeTreeWrapper');
-    const mainPigeonAnillo = document.getElementById('p-self').dataset.anillo;
+async function downloadPedigreeImage() {
+    const anillo = document.getElementById('p-self').dataset.anillo;
+    if (!anillo) { showToast('Selecciona una paloma primero.', 'error'); return; }
+    if (typeof html2canvas !== 'function') { showToast('No se cargó el generador de imágenes. Conéctate a internet y vuelve a intentar.', 'error'); return; }
 
-    if (!mainPigeonAnillo) {
-        if (window.Android) {
-            window.Android.showToast("No hay un pedigrí cargado para descargar.");
-        } else {
-            alert("No hay un pedigrí cargado para descargar.");
-        }
-        return;
-    }
+    // Tamaño carta horizontal: 11 × 8.5 pulgadas, a 144 ppp.
+    // Composición independiente de la pantalla: nunca capturar el árbol escalado del móvil.
+    const W = 1584, H = 1224;
+    const sheet = document.createElement('div');
+    sheet.setAttribute('aria-hidden', 'true');
+    Object.assign(sheet.style, {
+        position: 'fixed', left: '-20000px', top: '0', width: W + 'px', height: H + 'px',
+        background: '#fff', color: '#263747', boxSizing: 'border-box',
+        fontFamily: 'Arial, sans-serif', overflow: 'hidden', zIndex: '-1'
+    });
+    const style = document.createElement('style');
+    style.textContent = `
+      .print-pedigree-card {position:absolute!important;display:flex!important;flex-direction:column!important;
+        align-items:stretch!important;justify-content:center!important;overflow:hidden!important;
+        background:#fff!important;color:#263747!important;border:2px solid #263747!important;
+        border-radius:8px!important;box-shadow:none!important;box-sizing:border-box!important;
+        margin:0!important;padding:9px!important;text-align:center!important;min-height:0!important;
+        width:auto!important;max-width:none!important;transition:none!important;}
+      .print-pedigree-card strong {color:#263747!important;display:block!important;margin:2px 0!important;font-size:1.16em!important;line-height:1.15!important;}
+      .print-pedigree-card .info-line {color:#4c535a!important;font-size:.91em!important;line-height:1.17!important;}
+      .print-pedigree-card .pigeon-results {color:#ba6217!important;font-weight:600!important;
+        white-space:pre-wrap!important;overflow-wrap:anywhere!important;line-height:1.17!important;
+        border-top:1px dotted #ccc!important;margin-top:5px!important;padding-top:5px!important;
+        text-align:left!important;width:100%!important;font-size:.84em!important;}
+      .print-pedigree-card * {max-width:100%!important;box-sizing:border-box!important;}
+    `;
+    sheet.appendChild(style);
+    const title = document.createElement('div');
+    title.style.cssText = 'position:absolute;left:34px;top:22px;width:1516px;height:91px;border-bottom:2px solid #ddd;overflow:hidden;';
+    const heading = document.getElementById('pedigreeTitle').cloneNode(true);
+    heading.removeAttribute('id');
+    heading.style.cssText = 'margin:0 0 4px;text-align:left;font-family:Georgia,serif;font-style:italic;font-size:34px;color:#263747;line-height:1.1;';
+    const breeder = document.getElementById('pedigreeBreederInfo').cloneNode(true);
+    breeder.removeAttribute('id');
+    breeder.style.cssText = 'margin:0;font-size:17px;color:#555;line-height:1.2;border:0;';
+    title.append(heading, breeder);
+    sheet.appendChild(title);
 
-    // 1. Guardar el estado actual de los estilos de escalado para restaurar
-    const initialScrollX = window.scrollX;
-    const initialScrollY = window.scrollY;
-    const currentScaleTransform = pedigreeTreeWrapper.style.transform;
-    const currentWrapperWidth = pedigreeTreeWrapper.style.width;
-    const currentCaptureHeight = captureElement.style.height;
-    const currentOverflowX = captureElement.style.overflowX;
-    const currentClassList = captureElement.className;
-    const currentCaptureWidth = captureElement.style.width;
-    
-    // Notificar inicio de proceso
-    if (window.Android && window.Android.showToast) {
-        window.Android.showToast("Generando imagen. Esto puede tardar unos segundos...");
-    }
-
-    // 2. **RESET A TAMAÑO COMPLETO** (Eliminar escala para medir)
-    pedigreeTreeWrapper.style.transform = 'none';
-    pedigreeTreeWrapper.style.width = 'auto'; 
-    captureElement.style.height = 'auto'; 
-    captureElement.style.overflowX = 'hidden';
-    captureElement.classList.remove('scaled-pedigree');
-    // Asegurar que el contenedor principal tome el ancho total del pedigrí
-    captureElement.style.width = pedigreeTreeWrapper.scrollWidth + 'px'; 
-    
-    // 3. Crear Canvas, AHORA DENTRO DE UN TIMEOUT para dar tiempo al render
-    // Hemos agregado un retraso de 50ms para que el DOM se ajuste a los nuevos tamaños.
-    setTimeout(() => {
-        html2canvas(captureElement, {
-            scale: 2, 
-            scrollY: -window.scrollY, 
-            scrollX: -window.scrollX, 
-            windowWidth: document.documentElement.scrollWidth,
-            windowHeight: document.documentElement.scrollHeight,
-            allowTaint: true, 
-            useCORS: true
-        }).then(canvas => {
-            // 4. Restauración de estilos (esta parte es CRÍTICA)
-            pedigreeTreeWrapper.style.transform = currentScaleTransform;
-            pedigreeTreeWrapper.style.width = currentWrapperWidth;
-            captureElement.style.height = currentCaptureHeight;
-            captureElement.style.overflowX = currentOverflowX;
-            captureElement.className = currentClassList; 
-            captureElement.style.width = currentCaptureWidth; 
-            
-            // 5. Volver a llamar a showPedigree para restablecer la vista móvil
-            showPedigree(mainPigeonAnillo); 
-            window.scrollTo(initialScrollX, initialScrollY);
-
-            // ** LÓGICA DE GUARDADO NATIVO CON window.android.saveFile() **
-            const dataURL = canvas.toDataURL("image/png");
-            const fileNameBase = breederInfo.name || 'Pedigri';
-            const fileName = `${fileNameBase.replace(/[^a-zA-Z0-9]/g, '_')}-${mainPigeonAnillo}.png`;
-            const mimeType = "image/png";
-
-            if (window.Android && window.Android.saveFile) {
-                // CRÍTICO: Extraer SÓLO el dato Base64
-                const base64Data = dataURL.split(',')[1];
-                window.Android.saveFile(fileName, mimeType, base64Data);
-                return;
-            }
-            // ** FIN LÓGICA NATIVA **
-            
-            // Compartir archivo real en PWA (iOS/Android) y descarga en navegador.
-            canvas.toBlob(async blob => {
-                if (!blob) { showToast('No se pudo crear el archivo PNG.', 'error'); return; }
-                const file = new File([blob], fileName, { type: 'image/png' });
-                const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-                if (isStandalone && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                    try {
-                        await navigator.share({ files: [file], title: 'Pedigrí' });
-                        return;
-                    } catch (err) {
-                        if (err.name === 'AbortError') return;
-                        console.warn('Compartir archivo:', err);
-                    }
-                }
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = fileName;
-                document.body.appendChild(link);
-                link.click();
-                link.remove();
-                setTimeout(() => URL.revokeObjectURL(url), 60000);
-            }, 'image/png');
-        }).catch(err => {
-            // 8. Asegurar la restauración de estilos en caso de error
-            pedigreeTreeWrapper.style.transform = currentScaleTransform;
-            pedigreeTreeWrapper.style.width = currentWrapperWidth;
-            captureElement.style.height = currentCaptureHeight;
-            captureElement.style.overflowX = currentOverflowX;
-            captureElement.className = currentClassList;
-            captureElement.style.width = currentCaptureWidth;
-            
-            // Si falla, al menos intentar restaurar la vista
-            showPedigree(mainPigeonAnillo);
-            
-            window.scrollTo(initialScrollX, initialScrollY);
-            // Mostrar el error en la consola para depuración
-            console.error("Error detallado de html2canvas:", err); 
-            
-            if (window.Android) {
-                // Mensaje simplificado para el usuario
-                window.Android.showToast("Error al generar la imagen. Verifique la consola si está en desarrollo.");
-            } else {
-                alert("Error al generar la imagen: " + err.message);
-            }
+    const top = 157, usable = 1015;
+    const columns = [
+      {x:34,w:284, ids:['p-self'], heading:'PALOMA'},
+      {x:335,w:340,ids:['p-father','p-mother'],heading:'PADRES'},
+      {x:692,w:340,ids:['p-pgf','p-pgm','p-mgf','p-mgm'],heading:'ABUELOS'},
+      {x:1049,w:500,ids:['p-ppgf','p-ppgm','p-pmgf','p-pmgm','p-mpgf','p-mpgm','p-mmgf','p-mmgm'],heading:'BISABUELOS'}
+    ];
+    columns.forEach(col => {
+        const label = document.createElement('div');
+        label.textContent = col.heading;
+        label.style.cssText = `position:absolute;left:${col.x}px;top:124px;width:${col.w}px;text-align:center;font-size:17px;font-weight:bold;letter-spacing:1px;color:#34495e;`;
+        sheet.appendChild(label);
+        const gap = col.ids.length === 8 ? 8 : 14;
+        const cardH = (usable - gap * (col.ids.length - 1)) / col.ids.length;
+        col.ids.forEach((id, i) => {
+            const source = document.getElementById(id);
+            if (!source) return;
+            const card = source.cloneNode(true);
+            card.removeAttribute('id');
+            card.className = 'print-pedigree-card';
+            const count = (card.textContent || '').length;
+            // Reducir la tipografía cuando los resultados son extensos, sin alterar datos.
+            const available = Math.max(40, cardH - 22);
+            const estimatedLines = Math.max(3, Math.ceil(count / Math.max(18, col.w / 9)));
+            const font = Math.max(col.ids.length === 8 ? 9 : 10, Math.min(col.ids.length === 8 ? 13 : 17, available / (estimatedLines * 1.2)));
+            card.style.cssText = `left:${col.x}px;top:${top+i*(cardH+gap)}px;width:${col.w}px!important;height:${cardH}px!important;font-size:${font}px!important;`;
+            sheet.appendChild(card);
         });
-    }, 50); // ** AÑADIMOS EL RETRASO AQUÍ **
+    });
+    document.body.appendChild(sheet);
+    const filename = `${(breederInfo.name || 'Pedigri').replace(/[^a-zA-Z0-9]/g, '_')}-${anillo}.png`;
+    try {
+        await document.fonts.ready;
+        const canvas = await html2canvas(sheet, {scale:1, backgroundColor:'#fff',useCORS:true,
+            allowTaint:false, logging:false, width:W,height:H,windowWidth:W,windowHeight:H,
+            scrollX:0,scrollY:0});
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        if (!blob) throw new Error('No se pudo crear el PNG');
+        if (window.Android && window.Android.saveFile) {
+            const reader = new FileReader();
+            reader.onload = () => window.Android.saveFile(filename, 'image/png', String(reader.result).split(',')[1]);
+            reader.readAsDataURL(blob);
+            return;
+        }
+        const file = new File([blob], filename, {type:'image/png'});
+        const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+        if (standalone && navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
+            try { await navigator.share({files:[file],title:'Pedigrí'}); return; }
+            catch(e) { if (e.name === 'AbortError') return; }
+        }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+    } catch(err) {
+        console.error('Error al exportar pedigrí:',err);
+        showToast('No se pudo generar el pedigrí: '+err.message,'error');
+    } finally { sheet.remove(); }
 }
-
 
 function showToast(message, type = "info") {
     // Si existe API nativa de Android usa su toast
