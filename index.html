@@ -847,7 +847,7 @@ img, svg { max-width: 100%; height: auto; }
 
 
 /* Lista En Vuelo: gesto tipo Mail iOS, sin panel flotante. */
-#flightSwipeList {display:none; width:100%; padding-bottom:100px;}
+#flightSwipeList {display:none; width:100%; padding-bottom:100px; overflow-x:clip; background:var(--card);}
 body.inflight-mode #flightSwipeList, body.my-pigeons-mode #flightSwipeList {display:block;}
 body.inflight-mode #flightSwipeHeader, body.my-pigeons-mode #flightSwipeHeader {display:grid;}
 #flightSwipeHeader {display:none; grid-template-columns:22% 29% 13% 12% 24%; align-items:center; padding:11px 8px; background:var(--primary); color:#fff; font-weight:700; font-size:14px;}
@@ -855,9 +855,9 @@ body.inflight-mode #flightSwipeHeader, body.my-pigeons-mode #flightSwipeHeader {
 #flightSwipeHeader .swipe-filter {cursor:pointer; user-select:none; -webkit-user-select:none;}
 #flightSwipeHeader .swipe-filter:active {opacity:.65;}
 body.inflight-mode #pigeonTableSection > table, body.my-pigeons-mode #pigeonTableSection > table {display:none;}
-.flight-item {position:relative; overflow:hidden; height:72px; border-bottom:1px solid var(--border); background:#d84444; touch-action:pan-y;}
-.flight-item:nth-child(even) {background:#d84444;}
-.flight-actions {position:absolute; inset:0 0 0 auto; width:172px; display:flex;}
+.flight-item {position:relative; overflow:hidden; overflow:clip; height:72px; border-bottom:1px solid var(--border); background:var(--card); touch-action:pan-y; isolation:isolate; contain:paint;}
+.flight-item:nth-child(even) {background:var(--bg);}
+.flight-actions {position:absolute; top:0; right:0; bottom:0; width:172px; display:flex; z-index:0; clip-path:inset(0 0 0 0);}
 .flight-actions button {width:86px; border:0; color:white; font-size:12px; font-weight:600; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; padding:5px;}
 .flight-actions .flight-remove {background:#25865d;}
 .flight-actions .flight-add {background:#25865d;}
