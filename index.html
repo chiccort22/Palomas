@@ -869,6 +869,25 @@ body.inflight-mode #pigeonTableSection > table, body.my-pigeons-mode #pigeonTabl
 .flight-item.open .flight-front {transform:translateX(-172px);}
 .swipe-details-panel {background:var(--bg);padding:8px 10px;border-bottom:2px solid var(--accent);}
 .swipe-details-panel .details-row-content {padding:12px 8px;}
+
+/* Acciones integradas en las filas de Parejas Activas y Papelera */
+.pair-swipe-item,.trash-swipe-item{position:relative;height:72px;overflow:hidden;overflow:clip;contain:paint;isolation:isolate;border-bottom:1px solid var(--border);touch-action:pan-y;background:var(--card)}
+.pair-swipe-item:nth-child(even),.trash-swipe-item:nth-child(even){background:var(--bg)}
+.pair-swipe-actions,.trash-swipe-actions{position:absolute;right:0;top:0;bottom:0;display:flex;z-index:0}
+.pair-swipe-actions{width:304px}.trash-swipe-actions{width:172px}
+.pair-swipe-actions button{width:76px}.trash-swipe-actions button{width:86px}
+.pair-swipe-actions button,.trash-swipe-actions button{border:0;color:#fff;font-size:11px;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:4px 2px}
+.pair-swipe-actions i,.trash-swipe-actions i{font-size:20px}
+.swipe-action-use{background:#287f9c}.swipe-action-edit{background:#b58226}.swipe-action-delete{background:#df4848}.swipe-action-hatch{background:#25865d}.swipe-action-restore{background:#25865d}
+.pair-swipe-front,.trash-swipe-front{position:relative;z-index:1;height:100%;width:100%;display:grid;align-items:center;padding:0 8px;background:var(--card);color:var(--text);transition:transform .22s ease;will-change:transform}
+.pair-swipe-front{grid-template-columns:50% 50%}.trash-swipe-front{grid-template-columns:25% 37% 38%}
+.pair-swipe-item:nth-child(even) .pair-swipe-front,.trash-swipe-item:nth-child(even) .trash-swipe-front{background:var(--bg)}
+.pair-swipe-front span,.trash-swipe-front span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 5px;font-size:15px}
+.pair-swipe-item.open .pair-swipe-front{transform:translateX(-304px)}.trash-swipe-item.open .trash-swipe-front{transform:translateX(-172px)}
+.pair-info-panel{padding:12px;background:var(--bg);border-bottom:1px solid var(--border);color:var(--text)}
+.pair-info-panel strong{font-weight:700}
+#activePairsList .active-pairs-table td,#trashTableBody .swipe-cell{padding:0!important;border:0!important;overflow:visible!important}
+#activePairsList .active-pairs-table{table-layout:fixed}
 </style>
 
 </head>
@@ -1328,85 +1347,46 @@ body.inflight-mode #pigeonTableSection > table, body.my-pigeons-mode #pigeonTabl
         closeNav();
     }
 
+
+    // Mismo gesto de las listas de palomas; el scroll vertical no abre las acciones.
+    function attachRowSwipe(item, front) {
+        let x0=0,y0=0,started=false,moved=false;
+        front.addEventListener('touchstart', e=>{if(e.touches.length!==1)return;x0=e.touches[0].clientX;y0=e.touches[0].clientY;started=true;moved=false;},{passive:true});
+        front.addEventListener('touchmove', e=>{if(!started||!e.touches.length)return;const dx=e.touches[0].clientX-x0,dy=e.touches[0].clientY-y0;if(Math.abs(dx)>14&&Math.abs(dx)>Math.abs(dy)*1.2)moved=true;},{passive:true});
+        front.addEventListener('touchend', e=>{if(!started)return;started=false;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;
+            if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.2){const wasOpen=item.classList.contains('open');const parent=item.parentElement;if(parent)parent.querySelectorAll('.pair-swipe-item.open,.trash-swipe-item.open').forEach(el=>el.classList.remove('open'));if(dx<0&&!wasOpen)item.classList.add('open');moved=true;setTimeout(()=>{moved=false;},450);}
+        },{passive:true});
+        return ()=>moved;
+    }
+    function createSwipeAction(label, icon, cssClass, handler) {
+        const b=document.createElement('button');b.type='button';b.className=cssClass;
+        const i=document.createElement('i');i.className='fas '+icon;
+        const t=document.createElement('span');t.textContent=label;b.append(i,t);
+        b.addEventListener('click',e=>{e.stopPropagation();handler();});return b;
+    }
     function renderTrash() {
-        const tbody = document.getElementById('trashTableBody');
-        if (!tbody) return;
-        tbody.innerHTML = '';
-
-        if (!trash || trash.length === 0) {
-            const tr = document.createElement('tr');
-            const td = document.createElement('td');
-            td.colSpan = 3;
-            td.style.padding = '12px';
-            td.style.color = '#666';
-            td.style.textAlign = 'center';
-            td.innerText = 'La papelera está vacía.';
-            tr.appendChild(td);
-            tbody.appendChild(tr);
-            return;
-        }
-
-        // Mostrar entradas ordenadas por fecha eliminada descendente
-        const rows = [...trash].sort((a,b) => b.deletedAt - a.deletedAt);
-        rows.forEach((item, idx) => {
-            // Row with basic info
-            const tr = document.createElement('tr');
-            tr.style.borderBottom = '1px solid #eee';
-            tr.className = 'trash-row';
-            tr.classList.add((idx % 2 === 0) ? 'even' : 'odd');
-
-            const tdAnillo = document.createElement('td'); tdAnillo.style.padding = '8px';
-            const tdNombre = document.createElement('td'); tdNombre.style.padding = '8px';
-
-            // Soporte para entradas de tipo 'pair' (parejas activas eliminadas)
-            if (item.type === 'pair') {
-                tdAnillo.innerText = 'Pareja';
-                tdNombre.innerText = (item.father || '') + (item.father && item.mother ? ' + ' : '') + (item.mother || '') || (item.notes || '-');
-            } else {
-                tdAnillo.innerText = item.anillo;
-                tdNombre.innerText = item.nombre || '-';
-            }
-            const tdTime = document.createElement('td'); tdTime.style.padding = '8px'; tdTime.innerText = new Date(item.deletedAt).toLocaleString();
-
-            tr.appendChild(tdAnillo);
-            tr.appendChild(tdNombre);
-            tr.appendChild(tdTime);
-
-            // Action row hidden by default (appears when main row is clicked)
-            const actionTr = document.createElement('tr');
-            actionTr.style.display = 'none';
-            actionTr.className = 'trash-actions-row';
-            const actionTd = document.createElement('td');
-            actionTd.colSpan = 3;
-            actionTd.style.padding = '8px';
-            actionTd.style.textAlign = 'center';
-            actionTd.innerHTML = `
-                <button class="btn btn-primary" title="Restaurar" style="display:inline-flex; align-items:center; gap:8px; padding:6px 10px; height:34px; margin-right:8px; width:auto; max-width:45%;" onclick="event.stopPropagation(); restoreFromTrash('${item.anillo}')"><i class="fas fa-trash-restore" style="margin-right:6px;"></i> Restaurar</button>
-                <button class="btn btn-cancel" title="Eliminar permanentemente" style="display:inline-flex; align-items:center; gap:8px; padding:6px 10px; height:34px; width:auto; max-width:45%;" onclick="event.stopPropagation(); permanentlyDeleteFromTrash('${item.anillo}')"><i class="fas fa-trash" style="margin-right:6px;"></i> Eliminar</button>
-            `;
-            actionTr.appendChild(actionTd);
-
-            // Toggle action row on main row click (close others)
-            tr.addEventListener('click', () => {
-                const isOpen = actionTr.style.display !== 'none' && actionTr.style.display !== '';
-                // Close all other action rows
-                Array.from(tbody.querySelectorAll('.trash-actions-row')).forEach(r => r.style.display = 'none');
-                Array.from(tbody.querySelectorAll('.trash-row')).forEach(r => r.style.background = '');
-
-                if (!isOpen) {
-                    actionTr.style.display = 'table-row';
-                    tr.style.background = '';
-                    tr.scrollIntoView({ block: 'nearest' });
-                } else {
-                    actionTr.style.display = 'none';
-                    tr.style.background = '';
-                }
-            });
-
-            tbody.appendChild(tr);
-            tbody.appendChild(actionTr);
+        const tbody=document.getElementById('trashTableBody');if(!tbody)return;
+        tbody.replaceChildren();
+        if(!trash||!trash.length){const tr=tbody.insertRow();const td=tr.insertCell();td.colSpan=3;td.style.cssText='padding:16px;text-align:center;color:var(--text)';td.textContent='La papelera está vacía.';return;}
+        const rows=[...trash].sort((a,b)=>(b.deletedAt||0)-(a.deletedAt||0));
+        rows.forEach(item=>{
+            const tr=tbody.insertRow();const td=tr.insertCell();td.colSpan=3;td.className='swipe-cell';
+            const shell=document.createElement('div');shell.className='trash-swipe-item';
+            const actions=document.createElement('div');actions.className='trash-swipe-actions';
+            actions.append(
+                createSwipeAction('Restaurar','fa-trash-restore','swipe-action-restore',()=>restoreFromTrash(item.anillo)),
+                createSwipeAction('Eliminar','fa-trash','swipe-action-delete',()=>permanentlyDeleteFromTrash(item.anillo))
+            );
+            const front=document.createElement('div');front.className='trash-swipe-front';
+            const name=item.type==='pair'?'Pareja':(item.anillo||'-');
+            const description=item.type==='pair'?([item.father,item.mother].filter(Boolean).join(' + ')||item.notes||'-'):(item.nombre||'-');
+            const date=item.deletedAt?new Date(item.deletedAt).toLocaleString():'-';
+            [name,description,date].forEach(value=>{const span=document.createElement('span');span.textContent=value;front.append(span);});
+            const wasMoved=attachRowSwipe(shell,front);
+            front.addEventListener('click',()=>{if(wasMoved())return;if(shell.classList.contains('open'))shell.classList.remove('open');});
+            shell.append(actions,front);td.append(shell);
         });
-        try { updateSidebarCounts(); } catch (e) { /* noop */ }
+        try{updateSidebarCounts();}catch(e){}
     }
 
     function restoreFromTrash(anillo) {
@@ -1526,159 +1506,48 @@ body.inflight-mode #pigeonTableSection > table, body.my-pigeons-mode #pigeonTabl
     }
 
     function renderActivePairs() {
-        const listEl = document.getElementById('activePairsList');
-        listEl.innerHTML = '';
-        const query = (currentSearchQuery || '').toLowerCase().trim();
-
-        if (!activePairs || activePairs.length === 0) {
-            listEl.innerHTML = '<div style="color:#666">No hay parejas guardadas.</div>';
-            return;
-        }
-
-        // Filtrar parejas si hay una búsqueda activa
-        let pairsToShow = activePairs;
-        if (query && query.length > 0) {
-            pairsToShow = activePairs.filter(p => {
-                const father = pigeons.find(pg => pg.anillo === p.father) || { anillo: p.father || '', nombre: '' };
-                const mother = pigeons.find(pg => pg.anillo === p.mother) || { anillo: p.mother || '', nombre: '' };
-                const notes = (p.notes || '').toLowerCase();
-                return (father.anillo || '').toLowerCase().includes(query) || (father.nombre || '').toLowerCase().includes(query) || (mother.anillo || '').toLowerCase().includes(query) || (mother.nombre || '').toLowerCase().includes(query) || notes.includes(query);
+        const listEl=document.getElementById('activePairsList');if(!listEl)return;
+        listEl.replaceChildren();
+        const query=(currentSearchQuery||'').toLowerCase().trim();
+        if(!activePairs||!activePairs.length){listEl.textContent='No hay parejas guardadas.';return;}
+        const getLabel=val=>{if(!val)return '-';const found=pigeons.find(pg=>pg.anillo===val);return found&&found.nombre?`${val} (${found.nombre})`:val;};
+        const pairsToShow=activePairs.filter(p=>!query||[getLabel(p.father),getLabel(p.mother),p.notes||''].some(t=>t.toLowerCase().includes(query)));
+        if(!pairsToShow.length){listEl.textContent='No se encontraron parejas que coincidan con la búsqueda.';return;}
+        const table=document.createElement('table');table.className='active-pairs-table';table.style.cssText='width:100%;border-collapse:collapse';
+        const thead=document.createElement('thead');thead.innerHTML='<tr><th style="text-align:left;padding:8px">Macho</th><th style="text-align:left;padding:8px">Hembra</th></tr>';table.append(thead);
+        const tbody=document.createElement('tbody');table.append(tbody);
+        pairsToShow.forEach(p=>{
+            const tr=tbody.insertRow();const td=tr.insertCell();td.colSpan=2;td.className='swipe-cell';
+            const shell=document.createElement('div');shell.className='pair-swipe-item';
+            const actions=document.createElement('div');actions.className='pair-swipe-actions';
+            actions.append(
+                createSwipeAction('Usar','fa-check','swipe-action-use',()=>useActivePairInRegister(p.id)),
+                createSwipeAction('Editar','fa-edit','swipe-action-edit',()=>editActivePair(p.id)),
+                createSwipeAction('Eliminar','fa-trash','swipe-action-delete',()=>deleteActivePair(p.id)),
+                createSwipeAction('Eclosionar','fa-egg','swipe-action-hatch',()=>markHatched(p.id))
+            );
+            const front=document.createElement('div');front.className='pair-swipe-front';
+            [getLabel(p.father),getLabel(p.mother)].forEach(value=>{const span=document.createElement('span');span.textContent=value;front.append(span);});
+            const wasMoved=attachRowSwipe(shell,front);
+            const infoTr=document.createElement('tr');infoTr.style.display='none';infoTr.className='pair-info-row';
+            const infoTd=document.createElement('td');infoTd.colSpan=2;infoTr.append(infoTd);
+            const info=document.createElement('div');info.className='pair-info-panel';
+            const notes=document.createElement('div');notes.textContent=p.notes?'Nota: '+p.notes:'Sin notas';info.append(notes);
+            const dates=document.createElement('div');dates.style.marginTop='8px';
+            if(p.fechaPuesta){const hatchDate=p.hatchAt?new Date(p.hatchAt):null;dates.textContent='Fecha de postura: '+formatViewDate(p.fechaPuesta)+(hatchDate?' · Eclosión prevista: '+hatchDate.toLocaleDateString('es-ES'):'')+(p.hatchDone?' · Eclosionado':'');}
+            else dates.textContent='Sin fecha de postura';info.append(dates);infoTd.append(info);
+            front.addEventListener('click',()=>{
+                if(wasMoved())return;
+                if(shell.classList.contains('open')){shell.classList.remove('open');return;}
+                const opening=infoTr.style.display==='none';
+                tbody.querySelectorAll('.pair-info-row').forEach(r=>r.style.display='none');
+                infoTr.style.display=opening?'table-row':'none';
+                if(opening)setTimeout(()=>{const header=document.querySelector('.header');const h=header?header.offsetHeight:0;window.scrollTo({top:tr.getBoundingClientRect().top+window.pageYOffset-h,behavior:'smooth'});},100);
             });
-        }
-
-        if (pairsToShow.length === 0) {
-            listEl.innerHTML = `<div style="color:#666">No se encontraron parejas que coincidan con "${escapeHtml(currentSearchQuery)}".</div>`;
-            return;
-        }
-
-        // Crear una tabla para que el estilo de filas coincida con 'Mis Palomas'
-        const table = document.createElement('table');
-        table.className = 'active-pairs-table';
-        table.style.width = '100%';
-        table.style.borderCollapse = 'collapse';
-        const thead = document.createElement('thead');
-        thead.innerHTML = '<tr><th style="text-align:left; padding:8px">Macho</th><th style="text-align:left; padding:8px">Hembra</th><th style="width:0px; padding:0px"></th></tr>';
-        table.appendChild(thead);
-        const tbody = document.createElement('tbody');
-
-        const getLabel = (val) => {
-            if (!val) return '';
-            const found = pigeons.find(pg => pg.anillo === val);
-            if (found && found.nombre && found.nombre.trim() !== '') return `${val} (${found.nombre})`;
-            return val;
-        };
-
-        pairsToShow.forEach((p, idx) => {
-            const tr = document.createElement('tr');
-            tr.className = 'pigeon-row';
-            tr.classList.add((idx % 2 === 0) ? 'even' : 'odd');
-            tr.style.cursor = 'pointer';
-            tr.dataset.pairId = p.id;
-
-            const tdFather = document.createElement('td');
-            tdFather.style.padding = '8px';
-            tdFather.innerHTML = escapeHtml(getLabel(p.father));
-
-            const tdMother = document.createElement('td');
-            tdMother.style.padding = '8px';
-            tdMother.innerHTML = escapeHtml(getLabel(p.mother));
-
-            tr.appendChild(tdFather);
-            tr.appendChild(tdMother);
-            tbody.appendChild(tr);
-
-            // Fila de notas (solo nota)
-            const notesTr = document.createElement('tr');
-            notesTr.style.display = 'none';
-            notesTr.className = 'pair-actions-row';
-            const notesTd = document.createElement('td');
-            notesTd.colSpan = 3;
-            notesTd.style.padding = '6px 8px 12px 8px';
-            notesTd.innerHTML = `<div style="padding:8px 0; color: var(--text);">${p.notes ? '<strong>Nota:</strong> ' + escapeHtml(p.notes) : ''}</div>`;
-            notesTr.appendChild(notesTd);
-
-            // Fila de fechas/estado
-            const dateTr = document.createElement('tr');
-            dateTr.className = 'pair-actions-row';
-            dateTr.style.display = 'none';
-            const dateTd = document.createElement('td');
-            dateTd.colSpan = 3;
-            dateTd.style.padding = '6px 8px 12px 8px';
-            let hatchHtml = '';
-            if (p.fechaPuesta) {
-                const hatchDate = p.hatchAt ? new Date(p.hatchAt) : new Date(p.fechaPuesta);
-                const formatted = hatchDate.toLocaleDateString('es-ES', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-                });
-                hatchHtml = `<div style="margin-bottom:6px; color:var(--text);">Fecha de postura: <strong>${formatViewDate(p.fechaPuesta)}</strong>
-                    <div>
-                        <div style="margin-bottom:8px; color:var(--text);"> Eclosión prevista: <strong>${formatted}</strong></div>`;
-                if (p.hatchDone) {
-                    hatchHtml += '<div style="color:var(--success); font-weight:700;">Eclosionado</div>';
-                } else if (p.hatchAt && Date.now() >= p.hatchAt) {
-                    hatchHtml += '<div style="color:var(--warning); font-weight:700;">Listo para eclosión</div>';
-                } else {
-                    hatchHtml += '<div style="color:var(--text);">Recordatorio programado</div>';
-                }
-            } else {
-                hatchHtml = '<div style="color:#666;">Sin fecha de postura</div>';
-            }
-            dateTd.innerHTML = hatchHtml;
-            dateTr.appendChild(dateTd);
-
-            // Fila de botones (Usar / Editar / Eliminar / Marcar eclosionado)
-            const buttonsTr = document.createElement('tr');
-            buttonsTr.className = 'pair-actions-row';
-            buttonsTr.style.display = 'none';
-            const buttonsTd = document.createElement('td');
-            buttonsTd.colSpan = 3;
-            buttonsTd.style.padding = '6px 8px 12px 8px';
-            buttonsTd.innerHTML = `<div style="display:flex; gap:8px; flex-direction: column;"><button class=\"btn\" style=\"background:var(--accent); color:#fff; padding:6px 8px;\" onclick=\"event.stopPropagation(); useActivePairInRegister('${p.id}')\">Usar en Registro</button> <button class=\"btn\" style=\"background:var(--warning); color:#fff; padding:6px 8px;\" onclick=\"event.stopPropagation(); editActivePair('${p.id}')\">Editar</button> <button class=\"btn btn-cancel\" style=\"padding:6px 8px;\" onclick=\"event.stopPropagation(); deleteActivePair('${p.id}')\">Eliminar</button> <button class=\"btn btn-download\" style=\"padding:6px 8px;\" onclick=\"event.stopPropagation(); markHatched('${p.id}')\">Eclosionado</button></div>`;
-            buttonsTr.appendChild(buttonsTd);
-
-            // Añadir comportamiento de toggle al hacer click en la fila principal
-            tr.addEventListener('click', () => {
-                const wasOpen = (notesTr.style.display === 'table-row') || (dateTr.style.display === 'table-row') || (buttonsTr.style.display === 'table-row');
-                // Cerrar todas las filas de acciones e info y limpiar estilos
-                Array.from(tbody.querySelectorAll('.pair-actions-row')).forEach(ar => { ar.style.display = 'none'; });
-                Array.from(tbody.querySelectorAll('.pigeon-row')).forEach(r => { r.style.background = ''; });
-                if (!wasOpen) {
-                    notesTr.style.display = 'table-row';
-                    dateTr.style.display = 'table-row';
-                    buttonsTr.style.display = 'table-row';
-                    tr.style.background = '';
-
-                    // Auto-scroll: replicar comportamiento de toggleDetails() para consistencia
-                    setTimeout(() => {
-                        const header = document.querySelector('.header');
-                        const headerHeight = header ? header.offsetHeight : 0;
-                        const elementPosition = tr.getBoundingClientRect().top;
-                        const offsetPosition = elementPosition + window.pageYOffset - headerHeight;
-                        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-                    }, 100);
-                } else {
-                    notesTr.style.display = 'none';
-                    dateTr.style.display = 'none';
-                    buttonsTr.style.display = 'none';
-                    tr.style.background = '';
-                }
-            });
-
-            // Insertar las filas en el DOM justo después de la fila principal
-            try {
-                tr.after(notesTr, dateTr, buttonsTr);
-            } catch (e) {
-                tbody.appendChild(notesTr);
-                tbody.appendChild(dateTr);
-                tbody.appendChild(buttonsTr);
-            }
+            shell.append(actions,front);td.append(shell);tbody.append(infoTr);
         });
-
-        table.appendChild(tbody);
-        listEl.appendChild(table);
-        try { updateSidebarCounts(); } catch (e) { /* noop */ }
+        listEl.append(table);
+        try{updateSidebarCounts();}catch(e){}
     }
 
     function saveActivePair(e) {
