@@ -3309,23 +3309,19 @@ function cancelEdit() {
         // Ocultar FAB al abrir la fila de detalles
         document.body.classList.add('hide-fab');
 
-        // --- NUEVO: AUTO-SCROLL ---
-        // Esperamos un instante (100ms) para que el navegador dibuje la fila y luego hacemos el scroll
-        setTimeout(() => {
-            // Obtenemos la altura del menú superior para no tapar la paloma
-            const header = document.querySelector('.header');
-            const headerHeight = header ? header.offsetHeight : 0;
-            
-            // Calculamos la posición de la fila + el scroll actual - la altura del menú
-            const elementPosition = currentRow.getBoundingClientRect().top;
-            const offsetPosition = elementPosition + window.pageYOffset - headerHeight;
+        // Colocar la paloma seleccionada justo debajo del encabezado fijo.
+        // En las vistas con deslizamiento la fila es un DIV, no un TR.
+        const scrollTarget = (swipeRow && swipeRow.offsetParent !== null) ? swipeRow : currentRow;
+        if (scrollTarget) {
+            setTimeout(() => {
+                if (!scrollTarget.isConnected || openDetailAnillo !== anillo) return;
+                const header = document.querySelector('.header');
+                const headerHeight = header ? header.getBoundingClientRect().height : 0;
+                const top = scrollTarget.getBoundingClientRect().top + window.scrollY - headerHeight;
+                window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+            }, 100);
+        }
 
-            // Hacemos el desplazamiento suave
-            window.scrollTo({
-                top: offsetPosition,
-                behavior: "smooth"
-            });
-        }, 100);
     }
 
 
@@ -3591,19 +3587,22 @@ function buildDetailsContent(p) {
             const item = document.createElement('div'); item.className='flight-item'; item.dataset.anillo=p.anillo;
             const actions=document.createElement('div'); actions.className='flight-actions';
             const remove=document.createElement('button'); remove.type='button'; remove.className='flight-remove';
-            if (currentView === 'table') {
+            // La acción depende de la etiqueta real de esta paloma, no de la pestaña.
+            const hasFlightTag = p.tag === 'En Vuelo' || p.etiqueta === 'En Vuelo';
+            if (hasFlightTag) {
+                remove.innerHTML='<i class="fas fa-check-circle"></i><span>Quitar etiqueta</span>';
+                remove.onclick=() => {
+                    p.tag=''; p.etiqueta='';
+                    saveData(); renderTable();
+                    showToast('Etiqueta En Vuelo retirada', 'success');
+                };
+            } else {
                 remove.className='flight-add';
                 remove.innerHTML='<i class="fas fa-tag"></i><span>Agregar etiqueta</span>';
                 remove.onclick=() => {
                     p.tag='En Vuelo'; p.etiqueta='En Vuelo';
                     saveData(); renderTable();
                     showToast('Etiqueta En Vuelo agregada', 'success');
-                };
-            } else {
-                remove.innerHTML='<i class="fas fa-check-circle"></i><span>Quitar etiqueta</span>';
-                remove.onclick=() => {
-                    p.tag=''; p.etiqueta=''; saveData(); renderTable();
-                    showToast('Etiqueta En Vuelo retirada', 'success');
                 };
             }
             const del=document.createElement('button'); del.type='button'; del.className='flight-delete';
