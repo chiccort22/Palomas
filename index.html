@@ -890,13 +890,33 @@ body.inflight-mode #pigeonTableSection > table, body.my-pigeons-mode #pigeonTabl
 #activePairsList .active-pairs-table{table-layout:fixed}
 </style>
 
-</head>
+<style>
+#velocityContainer{padding:14px 12px 100px;color:var(--text)}
+#velocityContainer .card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 3px 12px #0000000b}
+#velocityContainer .tabs{display:flex;gap:5px;padding:5px;background:var(--bg);border-radius:15px;margin:15px 0}
+#velocityContainer .tabs button{flex:1;min-width:0;padding:11px 3px;background:transparent;color:var(--text);border:0;border-radius:12px;font-weight:600}
+#velocityContainer .tabs button[aria-selected=true]{background:var(--accent);color:white}
+#velocityContainer button{border:0;border-radius:14px;padding:11px 14px;background:var(--bg);color:var(--text);font-weight:600}
+#velocityContainer button.primary{background:var(--accent);color:white}
+#velocityContainer button.danger{background:#e74c3c;color:white}
+#velocityContainer .actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
+#velocityContainer .grid{display:grid;gap:12px}#velocityContainer label{font-size:13px;font-weight:600;color:var(--text)}
+#velocityContainer input{background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:11px;width:100%;font-size:16px}
+#velocityContainer .row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)}
+#velocityContainer .columnheads{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;font-size:12px;font-weight:700;margin-top:14px}
+#velocityContainer .bird-id{font-weight:750;overflow-wrap:anywhere}#velocityContainer .mini{font-size:11px;opacity:.75;line-height:1.5}
+#velocityContainer .topline{display:flex;justify-content:flex-end;margin-bottom:12px}#velocityContainer .badge{background:var(--bg);padding:6px 10px;border-radius:20px;font-size:12px}
+#velocityContainer .tablewrap{overflow:auto}#velocityContainer table{table-layout:auto;min-width:100%;font-size:13px}#velocityContainer th,#velocityContainer td{padding:11px 7px}#velocityContainer .speed{font-weight:800;color:var(--accent)}
+#velocityContainer .empty{text-align:center;padding:25px 8px;opacity:.7}#velocityContainer .save{font-size:12px;margin-top:8px}#velocityContainer .error{color:#e74c3c}
+#velocityContainer [hidden]{display:none!important}#velocityContainer .search{margin-bottom:8px}
+</style></head>
 <body onload="checkBreederInfo()">
 
     <div id="sidebar">
         <a href="javascript:void(0)" onclick="showPigeonTable()"><i class="fas fa-table"></i> Mis Palomas <span class="sidebar-count" id="count-mis">0</span></a>
         <a href="javascript:void(0)" onclick="openInFlightPigeons()"><i class="fas fa-wind"></i> En Vuelo <span class="sidebar-count" id="count-inflight">0</span></a>
         <a href="javascript:void(0)" onclick="openActivePairs()"><i class="fas fa-heart"></i> Parejas Activas <span class="sidebar-count" id="count-pairs">0</span></a>
+    <a href="javascript:void(0)" onclick="closeNav(); showView('velocities')"><i class="fas fa-stopwatch"></i> Velocidades Individuales</a>
     <a href="javascript:void(0)" onclick="openTrash()"><i class="fas fa-trash"></i> Papelera</a>
     <a href="javascript:void(0)" onclick="openConfig()"><i class="fas fa-cog"></i> Configuración</a>
 
@@ -1120,6 +1140,15 @@ body.inflight-mode #pigeonTableSection > table, body.my-pigeons-mode #pigeonTabl
             </div>
         </div>
 
+        <div id="velocityContainer" style="display:none">
+
+<section class="card"><div class="grid"><label>Distancia común · km<input id="distance" type="text" inputmode="decimal" placeholder="Ej. 10.000" autocomplete="off"></label></div><div class="actions"><button id="new">Nueva prueba</button></div><div id="save" class="save" role="status" hidden></div></section>
+<nav class="tabs" role="tablist" aria-label="Secciones"><button id="tab-register" role="tab" aria-selected="true" aria-controls="register">Registro</button><button id="tab-ranking" role="tab" aria-selected="false" aria-controls="ranking">Clasificación</button><button id="tab-weekly" role="tab" aria-selected="false" aria-controls="weekly">Semanal</button></nav>
+<section id="register" class="card" role="tabpanel" aria-labelledby="tab-register"><div class="topline"><span id="count" class="badge"></span></div><input id="search" class="search" type="search" placeholder="Buscar número de paloma" aria-label="Buscar paloma"><div class="columnheads"><span>PALOMA</span><span>SUELTA</span><span>LLEGADA</span></div><div id="rows"></div></section>
+<section id="ranking" class="card" role="tabpanel" aria-labelledby="tab-ranking" hidden><div class="topline"><span id="finished" class="badge"></span></div><div class="tablewrap"><table><thead><tr><th>LUGAR</th><th>PALOMA</th><th>VUELO</th><th>m/min</th></tr></thead><tbody id="results"></tbody></table></div><div id="empty" class="empty">Sin resultados todavía.</div><div class="actions"><button id="save-training" class="primary">Guardar entrenamiento</button><button id="export">Descargar resultados HTML</button></div></section>
+<section id="weekly" class="card" role="tabpanel" aria-labelledby="tab-weekly" hidden><div class="topline"><span id="training-count" class="badge"></span></div><div class="tablewrap"><table><thead id="weekly-head"></thead><tbody id="weekly-results"></tbody></table></div><div id="weekly-empty" class="empty">Sin entrenamientos guardados.</div><div id="training-list" class="actions"></div><div class="actions"><button id="new-week">Nueva semana</button><button id="export-weekly">Descargar resultados HTML</button></div></section>
+
+</div>
         <!-- Sección: Papelera -->
         <div id="trashContainer" class="form-box" style="display: none;">
                 <div id="trashList" style="width:100%; overflow:auto;">
@@ -2258,6 +2287,7 @@ if (window.Android) {
         breederInfoContainer.style.display = 'none'; 
         // ocultar parejas activas
         const apc = document.getElementById('activePairsContainer'); if (apc) apc.style.display = 'none';
+        const vc=document.getElementById('velocityContainer');if(vc)vc.style.display='none';
         // ocultar papelera
         const tc = document.getElementById('trashContainer'); if (tc) tc.style.display = 'none';
         // ocultar configuración
@@ -2275,7 +2305,7 @@ if (window.Android) {
 
         // Control FAB visibility and title
         document.body.classList.remove('hide-fab');
-        if (viewName === 'register' || viewName === 'backup' || viewName === 'breeder' || viewName === 'pedigree-view' || viewName === 'trash') {
+        if (viewName === 'register' || viewName === 'backup' || viewName === 'breeder' || viewName === 'pedigree-view' || viewName === 'trash' || viewName === 'velocities') {
             document.body.classList.add('hide-fab');
         }
 
@@ -2341,6 +2371,8 @@ if (window.Android) {
             const cc = document.getElementById('configContainer'); if (cc) cc.style.display = 'block';
             headerTitle = 'Configuración';
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else if (viewName === 'velocities') {
+            vc.style.display='block'; headerTitle='Velocidades Individuales'; if (typeof window.syncFlightBirds === 'function') window.syncFlightBirds(); window.scrollTo({top:0,behavior:'smooth'});
         } else if (viewName === 'trash') {
             const tc = document.getElementById('trashContainer'); if (tc) tc.style.display = 'block';
             headerTitle = 'Papelera';
@@ -3682,6 +3714,7 @@ function buildDetailsContent(p) {
 
     function saveData() {
         localStorage.setItem('misPalomas', JSON.stringify(pigeons));
+        try { if (typeof window.syncFlightBirds === 'function') window.syncFlightBirds(); } catch(e) { console.warn(e); }
         try { updateSidebarCounts(); } catch (e) { /* noop */ }
     }
     
@@ -4107,5 +4140,85 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 
+<script>
+(function(){
+
+'use strict';
+const KEY='palomas_pro_velocidades_v1';
+const INITIAL=[];
+const $=id=>document.getElementById(id);
+let state={trainings:[],currentTrainingId:null,distance:'',birds:INITIAL.map(number=>({number,start:'',arrival:''}))};
+try{const saved=JSON.parse(localStorage.getItem(KEY));if(saved&&Array.isArray(saved.birds)&&saved.birds.every(b=>b&&typeof b.number==='string'&&typeof b.start==='string'&&typeof b.arrival==='string'))state={distance:String(saved.distance??''),birds:saved.birds,trainings:Array.isArray(saved.trainings)?saved.trainings.filter(t=>t&&typeof t.id==='string'&&Array.isArray(t.results)&&t.results.every(r=>r&&typeof r.number==='string'&&Number.isFinite(r.speed)&&r.speed>0)):[],currentTrainingId:typeof saved.currentTrainingId==='string'?saved.currentTrainingId:null};}catch(e){$('save').textContent='No se pudieron recuperar los datos guardados.';$('save').hidden=false;}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));$('save').textContent='';$('save').hidden=true;$('save').classList.remove('error');return true;}catch(e){$('save').textContent='No se pudieron guardar los datos. Descarga tus resultados antes de cerrar.';$('save').classList.add('error');$('save').hidden=false;return false;}}
+function distanceMeters(){const raw=state.distance.trim().replace(',','.');return /^\d+(?:\.\d+)?$/.test(raw)&&Number(raw)>0?Number(raw)*1000:NaN;}
+function normalizeTime(value){const raw=value.trim();if(/^\d{3,4}$/.test(raw)){const digits=raw.padStart(4,'0');return digits.slice(0,2)+':'+digits.slice(2);}if(/^\d{6}$/.test(raw))return raw.slice(0,2)+':'+raw.slice(2,4)+':'+raw.slice(4);if(/^\d{1,2}:\d{2}(?::\d{2})?$/.test(raw))return raw.padStart(raw.length===4?5:raw.length===7?8:raw.length,'0');return raw;}
+function seconds(value){if(!/^\d{2}:\d{2}(?::\d{2})?$/.test(value))return NaN;const [h,m,s=0]=value.split(':').map(Number);return h<24&&m<60&&s<60?h*3600+m*60+s:NaN;}
+function flight(b){return seconds(b.arrival)-seconds(b.start)+(b.next?86400:0);}
+function duration(s){return `${String(Math.floor(s/3600)).padStart(2,'0')}:${String(Math.floor(s%3600/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;}
+function ordered(){const meters=distanceMeters();if(!Number.isFinite(meters))return [];return state.birds.filter(b=>b.start&&b.arrival&&flight(b)>0).map(b=>({...b,elapsed:flight(b),speed:meters*60/flight(b)})).sort((a,b)=>a.elapsed-b.elapsed||a.number.localeCompare(b.number,undefined,{numeric:true}));}
+function birdStatus(b){if(b.start&&b.arrival){const t=flight(b);if(!Number.isFinite(t))return 'Revisa las horas';if(t<=0)return 'Llegada debe ser posterior';if(Number.isFinite(distanceMeters()))return (distanceMeters()*60/t).toFixed(3)+' m/min';return 'Falta la distancia';}return b.start?'Esperando llegada':'Sin suelta';}
+function drawRows(){const root=$('rows');root.replaceChildren();state.birds.forEach((b,i)=>{const row=document.createElement('div');row.className='row';row.dataset.number=b.number;const title=document.createElement('div');const number=document.createElement('div');number.className='bird-id';number.textContent=b.number;const status=document.createElement('div');status.className='mini';status.id='status-'+i;status.textContent=birdStatus(b);title.append(number,status);const nextLabel=document.createElement('label');nextLabel.className='mini';const next=document.createElement('input');next.type='checkbox';next.style.cssText='width:16px;padding:0;margin:4px 5px 0 0';next.checked=!!b.next;next.addEventListener('change',()=>{b.next=next.checked;save();update();});nextLabel.append(next,document.createTextNode('Llega mañana'));title.append(nextLabel);row.append(title);for(const [field,label] of [['start','Suelta'],['arrival','Llegada']]){const input=document.createElement('input');input.type='text';input.inputMode='numeric';input.placeholder='08:00';input.maxLength=8;input.autocomplete='off';input.spellcheck=false;input.value=b[field]||'08:00:00';input.setAttribute('aria-label',label+' de '+b.number);const beginTime=()=>{if(!b[field]){input.value='08:00:00';b[field]=input.value;save();update();}};input.addEventListener('focus',()=>{beginTime();input.select();});input.addEventListener('input',()=>{b[field]=normalizeTime(input.value);save();update();});input.addEventListener('blur',()=>{const normalized=normalizeTime(input.value);if(Number.isFinite(seconds(normalized))){input.value=normalized;b[field]=normalized;save();update();}});row.append(input);}root.append(row);});filter();update();}
+function filter(){const q=$('search').value.trim().toLowerCase();for(const row of $('rows').children)row.hidden=!row.dataset.number.toLowerCase().includes(q);}
+function update(){let arrived=0;state.birds.forEach((b,i)=>{if(b.start&&b.arrival&&flight(b)>0)arrived++;const el=$('status-'+i);if(el){el.textContent=birdStatus(b);el.classList.toggle('error',!!b.start&&!!b.arrival&&!(flight(b)>0));}});$('count').textContent=state.birds.length+' palomas';$('finished').textContent=arrived+' / '+state.birds.length+' llegadas';const ranked=ordered();$('results').replaceChildren();ranked.forEach((b,i)=>{const rank=i+1;const tr=document.createElement('tr');if(rank===1)tr.className='winner';for(const val of [rank,b.number,duration(b.elapsed),b.speed.toFixed(3)]){const td=document.createElement('td');td.textContent=val;tr.append(td);}tr.lastChild.className='speed';$('results').append(tr);});$('empty').hidden=ranked.length>0;$('save-training').textContent=state.trainings.some(t=>t.id===state.currentTrainingId)?'Actualizar entrenamiento':'Guardar entrenamiento';}
+$('distance').value=state.distance;
+$('distance').addEventListener('input',()=>{state.distance=$('distance').value;save();update();});$('search').addEventListener('input',filter);
+function tab(active){for(const name of ['register','ranking','weekly']){$(name).hidden=name!==active;$('tab-'+name).setAttribute('aria-selected',String(name===active));}}
+$('tab-register').onclick=()=>tab('register');$('tab-ranking').onclick=()=>tab('ranking');$('tab-weekly').onclick=()=>{drawWeekly();tab('weekly');};
+$('new').onclick=()=>{if(!confirm('¿Iniciar una nueva prueba? Se borrarán las horas actuales. Los números y la distancia se conservarán.'))return;state.currentTrainingId=null;state.birds.forEach(b=>{b.start='';b.arrival='';b.next=false;});$('search').value='';save();drawRows();tab('register');};
+function weeklyOrdered(){const birds=new Map();state.trainings.forEach((t,index)=>{t.results.forEach(r=>{if(!birds.has(r.number))birds.set(r.number,{number:r.number,total:0,speeds:Array(state.trainings.length).fill(null)});const bird=birds.get(r.number);bird.speeds[index]=r.speed;bird.total+=r.speed;});});return [...birds.values()].sort((a,b)=>b.total-a.total||a.number.localeCompare(b.number,undefined,{numeric:true}));}
+function drawWeekly(){
+$('training-count').textContent=state.trainings.length+' entrenamientos';const headers=['LUGAR','PALOMA',...state.trainings.map((t,i)=>'E'+(i+1)),'PUNTUACIÓN'];const head=document.createElement('tr');headers.forEach(text=>{const th=document.createElement('th');th.textContent=text;head.append(th);});$('weekly-head').replaceChildren(head);$('weekly-results').replaceChildren();const birds=weeklyOrdered();birds.forEach((bird,i)=>{const tr=document.createElement('tr');if(i===0)tr.className='winner';[i+1,bird.number,...bird.speeds.map(v=>v===null?'—':v.toFixed(3)),bird.total.toFixed(3)].forEach(value=>{const td=document.createElement('td');td.textContent=value;tr.append(td);});tr.lastChild.className='speed';$('weekly-results').append(tr);});$('weekly-empty').hidden=birds.length>0;$('training-list').replaceChildren();state.trainings.forEach((t,i)=>{const button=document.createElement('button');button.textContent='Eliminar E'+(i+1);button.className='danger';button.onclick=()=>{if(!confirm('¿Eliminar el entrenamiento '+(i+1)+' de la clasificación semanal?'))return;const before=state.trainings;state.trainings=before.filter(item=>item.id!==t.id);if(!save()){state.trainings=before;return;}drawWeekly();update();};$('training-list').append(button);});}
+$('save-training').onclick=()=>{const results=ordered();if(!results.length){alert('Introduce una distancia válida y al menos una suelta y llegada válidas.');return;}const invalid=state.birds.filter(b=>(b.start||b.arrival)&&!results.some(r=>r.number===b.number));if(invalid.length&&!confirm('Hay '+invalid.length+' paloma(s) con horas incompletas o inválidas. Se guardarán solo las '+results.length+' con velocidad válida. ¿Continuar?'))return;const id=state.currentTrainingId||('e-'+Date.now()+'-'+Math.random().toString(36).slice(2));const entry={id,distance:state.distance,results:results.map(b=>({number:b.number,start:b.start,arrival:b.arrival,next:!!b.next,elapsed:b.elapsed,speed:b.speed}))};const index=state.trainings.findIndex(t=>t.id===id);const previous=state.trainings;const oldId=state.currentTrainingId;state.trainings=index<0?[...previous,entry]:previous.map(t=>t.id===id?entry:t);state.currentTrainingId=id;if(!save()){state.trainings=previous;state.currentTrainingId=oldId;alert('No se pudo guardar el entrenamiento en este dispositivo.');return;}drawWeekly();update();tab('weekly');};
+$('new-week').onclick=()=>{if(!state.trainings.length)return;if(!confirm('¿Vaciar la clasificación semanal para empezar una nueva semana? Se eliminarán los entrenamientos guardados de esta tabla. El registro actual y los números se conservarán.'))return;const before=state.trainings;const oldId=state.currentTrainingId;state.trainings=[];state.currentTrainingId=null;if(!save()){state.trainings=before;state.currentTrainingId=oldId;return;}drawWeekly();update();};
+function escapeHTML(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function buildReport(results){
+const rows=results.map((b,i)=>{const rank=i+1;const medal=rank<=3?'<span class="medal '+['gold','silver','bronze'][i]+'">'+rank+'</span>':rank;const start=b.start;const arrival=b.arrival;return '<tr><td class="rank">'+medal+'</td><td>'+escapeHTML(b.number)+'</td><td>'+escapeHTML(start.trim())+'</td><td>'+escapeHTML(arrival.trim())+'</td><td class="numeric">'+(distanceMeters()/1000).toFixed(3)+'</td><td>'+duration(b.elapsed)+'</td><td class="numeric">'+b.speed.toFixed(3)+'</td></tr>';}).join('');
+return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=1000"><title></title><style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap');
+:root{color-scheme:light;--border-color:#E0E6ED}body{font-family:'Poppins',Arial,sans-serif;margin:20px;background:white;color:#222}.tablewrap{overflow-x:visible}table{width:100%;border-collapse:collapse;margin-top:15px;min-width:800px;font-variant-numeric:tabular-nums}th,td{border:1px solid var(--border-color);padding:10px;text-align:left;font-size:14px}th{background:#0056b3;color:white;text-align:center}tbody tr:nth-child(even){background:#f2f2f2}td.rank{font-weight:bold;text-align:center}td.numeric{text-align:right}td{white-space:nowrap}.medal{display:inline-block;width:25px;height:25px;line-height:25px;border-radius:50%;color:white;font-size:14px;font-weight:700;text-align:center;box-shadow:0 2px 4px rgba(0,0,0,.3);border:2px solid white}.gold{background:#FFD700;border-color:#B8860B;color:#333}.silver{background:#C0C0C0;border-color:#A9A9A9}.bronze{background:#CD7F32;border-color:#8B4513}@media print{body{margin:0}.tablewrap{overflow:visible}table{min-width:0}th,td{font-size:11px;padding:6px}th,.medal{-webkit-print-color-adjust:exact;print-color-adjust:exact}tr{break-inside:avoid}}
+</style></head><body><div class="tablewrap"><table id="resultados-table"><thead><tr><th>Lugar</th><th>Número</th><th>Suelta</th><th>Llegada</th><th>Distancia (km)</th><th>Duración</th><th>Velocidad (m/min)</th></tr></thead><tbody>${rows}</tbody></table></div></body></html>`;
+}
+function buildWeeklyReport(){
+const trainings=state.trainings;
+const birds=weeklyOrdered();
+const headers=['LUGAR','PALOMA',...trainings.map((_,i)=>'E'+(i+1)),'PUNTUACIÓN'];
+const head=headers.map(h=>'<th>'+escapeHTML(h)+'</th>').join('');
+const rows=birds.map((bird,i)=>{
+const rank=i+1;
+const medal=rank<=3?'<span class="medal '+['gold','silver','bronze'][i]+'">'+rank+'</span>':rank;
+const values=[bird.number,...bird.speeds.map(v=>v===null?'—':v.toFixed(3)),bird.total.toFixed(3)];
+return '<tr><td class="rank">'+medal+'</td>'+values.map((v,j)=>'<td class="'+(j===values.length-1?'numeric score':'numeric')+'">'+escapeHTML(v)+'</td>').join('')+'</tr>';
+}).join('');
+return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=1000"><title>Clasificación semanal</title><style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap');
+:root{color-scheme:light;--border-color:#E0E6ED}body{font-family:'Poppins',Arial,sans-serif;margin:20px;background:white;color:#222}.tablewrap{overflow-x:auto}table{width:100%;border-collapse:collapse;margin-top:15px;min-width:800px;font-variant-numeric:tabular-nums}th,td{border:1px solid var(--border-color);padding:10px;text-align:left;font-size:14px}th{background:#0056b3;color:white;text-align:center}tbody tr:nth-child(even){background:#f2f2f2}td.rank{font-weight:bold;text-align:center}td.numeric{text-align:right}td.score{font-weight:700;color:#205cc5}td{white-space:nowrap}.medal{display:inline-block;width:25px;height:25px;line-height:25px;border-radius:50%;color:white;font-size:14px;font-weight:700;text-align:center;box-shadow:0 2px 4px rgba(0,0,0,.3);border:2px solid white}.gold{background:#FFD700;border-color:#B8860B;color:#333}.silver{background:#C0C0C0;border-color:#A9A9A9}.bronze{background:#CD7F32;border-color:#8B4513}@media print{body{margin:0}.tablewrap{overflow:visible}table{min-width:0}th,td{font-size:11px;padding:6px}th,.medal{-webkit-print-color-adjust:exact;print-color-adjust:exact}tr{break-inside:avoid}}
+</style></head><body><div class="tablewrap"><table><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div></body></html>`;
+}
+$('export-weekly').onclick=()=>{
+if(!state.trainings.length||!weeklyOrdered().length){alert('No hay resultados semanales para descargar.');return;}
+const blob=new Blob([buildWeeklyReport()],{type:'text/html;charset=utf-8'});
+const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='Clasificacion_Semanal.html';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+};
+$('export').onclick=()=>{const results=ordered();if(!results.length){alert('Introduce una distancia válida y al menos una suelta y llegada válidas.');return;}const blob=new Blob([buildReport(results)],{type:'text/html;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='Velocidades.html';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);};
+
+function syncFlightBirds(){
+  // Leer la misma fuente persistente que utiliza la lista principal de Palomas Pro.
+  let source=[];
+  try { const stored=JSON.parse(localStorage.getItem('misPalomas')||'[]'); if(Array.isArray(stored)) source=stored; } catch(e) { console.warn('Palomas guardadas',e); }
+  // Los cambios recientes todavía pueden estar en memoria antes de persistirse.
+  try { if(typeof pigeons!=='undefined' && Array.isArray(pigeons)) source=pigeons; } catch(e) {}
+  const nums=[...new Set(source.filter(p=>[p.tag,p.etiqueta].some(v=>String(v||'').trim().toLocaleLowerCase()==='en vuelo')).map(p=>String(p.anillo||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'}));
+  const old=new Map(state.birds.map(b=>[b.number,b]));
+  const next=nums.map(number=>old.get(number)||{number,start:'',arrival:''});
+  if(JSON.stringify(next)!==JSON.stringify(state.birds)){state.birds=next;save();drawRows();}else update();
+  const count=document.getElementById('count'); if(count && !nums.length) count.textContent='0 palomas En Vuelo';
+}
+window.syncFlightBirds = syncFlightBirds;
+window.addEventListener('storage',e=>{if(e.key==='misPalomas')syncFlightBirds();});
+drawRows();drawWeekly();
+try { syncFlightBirds(); } catch(e) { console.warn("Sincronización de velocidades", e); }
+
+})();
+</script>
 </body>
 </html>
