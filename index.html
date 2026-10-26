@@ -964,6 +964,16 @@ body:not(.my-pigeons-mode):not(.inflight-mode) #birdViewSwitcher{display:none}
 #flightSwipeList.bird-grid .swipe-details-panel{grid-column:1/-1;min-width:0;width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:14px;margin:0 0 8px;overflow:hidden}
 #flightSwipeList.bird-grid .swipe-details-panel .details-row-content{width:100%;min-width:0;overflow-wrap:anywhere}
 @media(max-width:350px){#flightSwipeList.bird-grid{gap:8px}#flightSwipeList.bird-grid .benz-title{font-size:14px}}
+#birdToolbar{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;background:var(--bg)}
+#birdToolbar #birdViewSwitcher{padding:0;background:transparent}
+#birdFilterButton{width:44px;height:42px;border:0;border-radius:11px;background:var(--card);color:var(--text);font-size:19px;cursor:pointer}
+#birdFilterButton.active{color:var(--accent)}
+#birdFilterPanel[hidden]{display:none!important}
+#birdFilterPanel{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;padding:12px 15px;background:var(--card);border-bottom:1px solid var(--border)}
+#birdFilterPanel label{font-size:13px;margin:0;color:var(--text)}
+#birdFilterPanel select{min-width:0;background:var(--bg);color:var(--text)}
+#birdFilterClear{grid-column:1/-1;background:var(--primary);color:white;border:0;border-radius:9px;padding:10px}
+body:not(.my-pigeons-mode):not(.inflight-mode) #birdToolbar,body:not(.my-pigeons-mode):not(.inflight-mode) #birdFilterPanel{display:none!important}
 </style>
 
 <style>
@@ -1274,7 +1284,8 @@ body:not(.my-pigeons-mode):not(.inflight-mode) #birdViewSwitcher{display:none}
         </thead>
         <tbody id="pigeonTableBody"></tbody>
     </table>
-    <div id="birdViewSwitcher" role="group" aria-label="Vista de palomas"><button type="button" id="birdListButton" aria-label="Vista de lista" aria-pressed="true" title="Lista"><i class="fas fa-list"></i></button><button type="button" id="birdGridButton" aria-label="Vista de cuadrícula" aria-pressed="false" title="Cuadrícula"><i class="fas fa-th-large"></i></button></div>
+    <div id="birdToolbar"><button type="button" id="birdFilterButton" aria-label="Filtrar palomas" aria-expanded="false" title="Filtrar"><i class="fas fa-filter"></i></button><div id="birdViewSwitcher" role="group" aria-label="Vista de palomas"><button type="button" id="birdListButton" aria-label="Vista de lista" aria-pressed="true" title="Lista"><i class="fas fa-list"></i></button><button type="button" id="birdGridButton" aria-label="Vista de cuadrícula" aria-pressed="false" title="Cuadrícula"><i class="fas fa-th-large"></i></button></div></div>
+    <div id="birdFilterPanel" hidden><label for="birdFilterSex">Sexo</label><select id="birdFilterSex"><option value="Todos">Todos</option><option value="Macho">Machos</option><option value="Hembra">Hembras</option><option value="Desconocido">Desconocido</option></select><label for="birdFilterYear">Año</label><select id="birdFilterYear"><option value="Todos">Todos</option></select><button type="button" id="birdFilterClear">Limpiar filtros</button></div>
     <div id="flightSwipeHeader"><span>Anillo</span><span>Nombre</span><span class="swipe-filter" id="swipeYearFilter" role="button" tabindex="0" title="Filtrar por año">Año</span><span class="swipe-filter" id="swipeSexFilter" role="button" tabindex="0" title="Filtrar por sexo">Sexo</span><span>Color</span></div>
     <div id="flightSwipeList" aria-label="Lista de palomas con acciones al deslizar"></div>
 </div>
@@ -2130,6 +2141,34 @@ body:not(.my-pigeons-mode):not(.inflight-mode) #birdViewSwitcher{display:none}
     }
     // ** MODIFICACIÓN FIN **
 
+    // Panel de filtros compartido por lista y cuadrícula.
+    function syncBirdFilterPanel(){
+        const sex=document.getElementById('birdFilterSex'),year=document.getElementById('birdFilterYear');
+        if(!sex||!year)return;
+        sex.value=currentFilter;
+        const years=[...new Set(pigeons.map(p=>String(p.anoNacimiento||'').trim()).filter(Boolean))].sort((a,b)=>Number(b)-Number(a));
+        year.replaceChildren(new Option('Todos','Todos'),...years.map(y=>new Option(y,y)));
+        year.value=currentYearFilter;
+        document.getElementById('birdFilterButton')?.classList.toggle('active',currentFilter!=='Todos'||currentYearFilter!=='Todos');
+    }
+    document.getElementById('birdFilterButton')?.addEventListener('click',()=>{
+        const panel=document.getElementById('birdFilterPanel');
+        syncBirdFilterPanel();panel.hidden=!panel.hidden;
+        document.getElementById('birdFilterButton').setAttribute('aria-expanded',String(!panel.hidden));
+    });
+    document.getElementById('birdFilterSex')?.addEventListener('change',e=>{
+        currentFilter=e.target.value;currentFilterIndex=filterStates.indexOf(currentFilter);
+        localStorage.setItem('filterSex',currentFilter);renderTable();syncBirdFilterPanel();
+    });
+    document.getElementById('birdFilterYear')?.addEventListener('change',e=>{
+        currentYearFilter=e.target.value;localStorage.setItem('filterYear',currentYearFilter);
+        renderTable();syncBirdFilterPanel();
+    });
+    document.getElementById('birdFilterClear')?.addEventListener('click',()=>{
+        currentFilter='Todos';currentFilterIndex=0;currentYearFilter='Todos';
+        localStorage.removeItem('filterSex');localStorage.removeItem('filterYear');
+        renderTable();syncBirdFilterPanel();
+    });
     function cycleSexFilter() {
         currentFilterIndex = (currentFilterIndex + 1) % filterStates.length;
         currentFilter = filterStates[currentFilterIndex];
