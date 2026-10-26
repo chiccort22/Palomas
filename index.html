@@ -904,6 +904,7 @@ body.my-pigeons-mode #flightSwipeList,body.inflight-mode #flightSwipeList{paddin
 .benz-sub{font-size:14px;color:#8290a2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .benz-extra{font-size:12px;color:#8290a2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .benz-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#18bf8c;vertical-align:middle;margin-left:5px}
+.benz-tag-indicator{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;margin-left:7px;font-size:15px;line-height:1;flex-shrink:0}
 .benz-more{flex:0 0 34px;border:0;background:transparent;color:var(--text);font-size:20px;padding:6px;cursor:pointer}
 #flightSwipeList .flight-total{padding:18px;text-align:center;font-weight:700;color:var(--text)}
 :root.dark .benz-sub,:root.dark .benz-extra{color:#a7b1bd}
@@ -995,6 +996,11 @@ body:not(.my-pigeons-mode):not(.inflight-mode) #birdToolbar,body:not(.my-pigeons
 #velocityContainer .tablewrap{overflow:auto}#velocityContainer table{table-layout:auto;min-width:100%;font-size:13px}#velocityContainer th,#velocityContainer td{padding:11px 7px}#velocityContainer .speed{font-weight:800;color:var(--accent)}
 #velocityContainer .empty{text-align:center;padding:25px 8px;opacity:.7}#velocityContainer .save{font-size:12px;margin-top:8px}#velocityContainer .error{color:#e74c3c}
 #velocityContainer [hidden]{display:none!important}#velocityContainer .search{margin-bottom:8px}
+.bird-tag-overlay{position:fixed;inset:0;background:#0009;z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px}
+.bird-tag-panel{background:var(--card);color:var(--text);border-radius:18px;padding:18px;width:min(100%,390px);box-shadow:0 15px 40px #0004}
+.bird-tag-panel h3{margin:0 0 12px;font-size:19px}
+.bird-tag-option,.bird-tag-cancel{display:block;width:100%;border:0;border-bottom:1px solid var(--border);background:transparent;color:var(--text);padding:14px 8px;text-align:left;font-size:16px}
+.bird-tag-cancel{text-align:center;color:var(--accent);font-weight:700;border-bottom:0}
 </style></head>
 <body onload="checkBreederInfo()">
 
@@ -1095,8 +1101,10 @@ body:not(.my-pigeons-mode):not(.inflight-mode) #birdToolbar,body:not(.my-pigeons
                         <label>Etiqueta:</label>
                         <select id="etiqueta">
                             <option value="">Ninguna</option>
-                            <!-- Eliminadas las etiquetas 'Vendida' y 'Perdida' por petición del usuario -->
-                            <option value="En Vuelo">En Vuelo</option>
+                            <option value="En Vuelo">En Vuelo (Activa)</option>
+                            <option value="Perdida">Perdida</option>
+                            <option value="Vendida">Vendida</option>
+                            <option value="Fallecida">Fallecida</option>
                         </select>
                     </div>
 
@@ -2251,6 +2259,24 @@ body:not(.my-pigeons-mode):not(.inflight-mode) #birdToolbar,body:not(.my-pigeons
 
     // Allow years up to 3000 (instead of limiting to current year)
     anoNacimientoInput.max = 3000;
+    const BIRD_TAG_VISUALS = {
+        'En Vuelo': {icon:'fa-check-circle', color:'#18bf8c', label:'Activa (En Vuelo)'},
+        'Perdida': {icon:'fa-question-circle', color:'#ef4444', label:'Perdida'},
+        'Vendida': {icon:'fa-money-bill-wave', color:'#e9a23b', label:'Vendida'},
+        'Fallecida': {icon:'fa-times-circle', color:'#8b95a7', label:'Fallecida'}
+    };
+    function makeBirdTagIndicator(tag) {
+        const data = BIRD_TAG_VISUALS[tag];
+        if (!data) return null;
+        const indicator = document.createElement('span');
+        indicator.className = 'benz-tag-indicator';
+        indicator.title = data.label;
+        indicator.setAttribute('aria-label', data.label);
+        indicator.style.color = data.color;
+        indicator.innerHTML = '<i class="fas '+data.icon+'" aria-hidden="true"></i>';
+        return indicator;
+    }
+
     renderTable(); 
     updateSelects();
     
@@ -3693,6 +3719,48 @@ function buildDetailsContent(p) {
     document.getElementById('birdListButton')?.addEventListener('click',()=>setBirdViewMode('list'));
     document.getElementById('birdGridButton')?.addEventListener('click',()=>setBirdViewMode('grid'));
     syncBirdViewMode();
+    const BIRD_TAG_OPTIONS = ['En Vuelo', 'Perdida', 'Vendida', 'Fallecida'];
+    function openBirdTagPicker(anillo) {
+        const bird = pigeons.find(p => String(p.anillo) === String(anillo));
+        if (!bird) return;
+        document.getElementById('birdTagDialog')?.remove();
+        const overlay = document.createElement('div');
+        overlay.id = 'birdTagDialog';
+        overlay.className = 'bird-tag-overlay';
+        const panel = document.createElement('div');
+        panel.className = 'bird-tag-panel';
+        const title = document.createElement('h3');
+        title.textContent = 'Etiqueta · ' + bird.anillo;
+        panel.append(title);
+        for (const tag of BIRD_TAG_OPTIONS) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'bird-tag-option';
+            const selected = (bird.tag || bird.etiqueta || '') === tag;
+            button.innerHTML = '<i class="fas ' + BIRD_TAG_VISUALS[tag].icon + '" style="color:' + BIRD_TAG_VISUALS[tag].color + ';margin-right:12px"></i>' + (selected ? '✓  ' : '') + (tag === 'En Vuelo' ? 'En Vuelo (Activa)' : tag);
+            button.onclick = () => {
+                bird.tag = tag; bird.etiqueta = tag;
+                saveData(); overlay.remove(); renderTable();
+                showToast('Etiqueta: ' + tag, 'success');
+            };
+            panel.append(button);
+        }
+        const clear = document.createElement('button');
+        clear.type = 'button'; clear.className = 'bird-tag-option';
+        clear.textContent = 'Quitar etiqueta';
+        clear.onclick = () => {
+            bird.tag = ''; bird.etiqueta = '';
+            saveData(); overlay.remove(); renderTable();
+            showToast('Etiqueta retirada', 'success');
+        };
+        panel.append(clear);
+        const cancel = document.createElement('button');
+        cancel.type = 'button'; cancel.className = 'bird-tag-cancel';
+        cancel.textContent = 'Cancelar'; cancel.onclick = () => overlay.remove();
+        panel.append(cancel);
+        overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+        overlay.append(panel); document.body.append(overlay);
+    }
     function renderFlightSwipeList(items) {
         openDetailAnillo = null;
         document.body.classList.remove('hide-fab');
@@ -3713,22 +3781,12 @@ function buildDetailsContent(p) {
             const remove=document.createElement('button'); remove.type='button'; remove.className='flight-remove';
             // La acción depende de la etiqueta real de esta paloma, no de la pestaña.
             const hasFlightTag = p.tag === 'En Vuelo' || p.etiqueta === 'En Vuelo';
-            if (hasFlightTag) {
-                remove.innerHTML='<i class="fas fa-check-circle"></i><span>Quitar etiqueta</span>';
-                remove.onclick=() => {
-                    p.tag=''; p.etiqueta='';
-                    saveData(); renderTable();
-                    showToast('Etiqueta En Vuelo retirada', 'success');
-                };
-            } else {
-                remove.className='flight-add';
-                remove.innerHTML='<i class="fas fa-tag"></i><span>Agregar etiqueta</span>';
-                remove.onclick=() => {
-                    p.tag='En Vuelo'; p.etiqueta='En Vuelo';
-                    saveData(); renderTable();
-                    showToast('Etiqueta En Vuelo agregada', 'success');
-                };
-            }
+            const currentTag = p.tag || p.etiqueta || '';
+            remove.className = currentTag ? 'flight-remove' : 'flight-add';
+            remove.innerHTML = currentTag
+                ? '<i class="fas fa-tags"></i><span>Cambiar etiqueta</span>'
+                : '<i class="fas fa-tag"></i><span>Agregar etiqueta</span>';
+            remove.onclick = () => openBirdTagPicker(p.anillo);
             const del=document.createElement('button'); del.type='button'; del.className='flight-delete';
             del.innerHTML='<i class="fas fa-trash"></i><span>Eliminar</span>';
             del.onclick=() => {closeFlightActions(); deletePigeon(p.anillo);};
@@ -3746,7 +3804,8 @@ function buildDetailsContent(p) {
             const title=document.createElement('div');title.className='benz-title';
             const symbol=document.createElement('span');symbol.className='sex-symbol';symbol.textContent=unknown?'◇':female?'♀':'♂';
             title.append(symbol,document.createTextNode(p.anillo));
-            if(hasFlightTag){const dot=document.createElement('span');dot.className='benz-dot';dot.title='En Vuelo';title.append(dot);}
+            const tagIndicator = makeBirdTagIndicator(currentTag);
+            if (tagIndicator) title.append(tagIndicator);
             const sub=document.createElement('div');sub.className='benz-sub';
             sub.textContent=p.nombre||[formatYearDisplay(p.anoNacimiento),p.color].filter(Boolean).join(' · ')||'Sin nombre';
             const extra=document.createElement('div');extra.className='benz-extra';
