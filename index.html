@@ -1355,7 +1355,7 @@ body:not(.my-pigeons-mode):not(.inflight-mode) #birdToolbar,body:not(.my-pigeons
         <div id="pedigreeViewSection" style="display: none;">
             
             <div class="pedigree-buttons-bar">
-                <button onclick="downloadPedigreeImage()" class="btn btn-download">📸 Descargar Pedigrí como Imagen</button>
+                <button type="button" id="downloadPedigreeBtn" onclick="downloadPedigreeImage()" class="btn btn-download">📸 Descargar Pedigrí como Imagen</button>
             </div>
             
             <div id="captureArea">
@@ -3875,9 +3875,9 @@ function buildDetailsContent(p) {
             const extra=document.createElement('div');extra.className='benz-extra';
             extra.textContent=[p.nombre?formatYearDisplay(p.anoNacimiento):'',p.nombre?p.color:'',p.linea].filter(Boolean).join(' · ');
             info.append(title,sub,extra);
-            const more=document.createElement('button');more.type='button';more.className='benz-more';more.setAttribute('aria-label','Mostrar acciones');more.innerHTML='<i class="fas fa-ellipsis-v"></i>';
-            more.addEventListener('click',e=>{e.stopPropagation();const wasOpen=item.classList.contains('open');closeFlightActions();if(!wasOpen)item.classList.add('open');});
-            front.append(avatar,info,more);
+            // Las acciones siguen disponibles al deslizar la tarjeta hacia la izquierda.
+            // Sin botón de tres puntos para no tapar la fotografía.
+            front.append(avatar,info);
             let x0=0,y0=0,started=false,moved=false;
             front.addEventListener('touchstart',e=>{if(e.touches.length!==1)return; x0=e.touches[0].clientX;y0=e.touches[0].clientY;started=true;moved=false;},{passive:true});
             front.addEventListener('touchmove',e=>{if(!started)return; const dx=e.touches[0].clientX-x0,dy=e.touches[0].clientY-y0; if(Math.abs(dx)>14&&Math.abs(dx)>Math.abs(dy)*1.2)moved=true;},{passive:true});
@@ -4359,7 +4359,15 @@ function buildDetailsContent(p) {
 async function downloadPedigreeImage() {
     const anillo = document.getElementById('p-self').dataset.anillo;
     if (!anillo) { showToast('Selecciona una paloma primero.', 'error'); return; }
-    if (typeof html2canvas !== 'function') { showToast('No se cargó el generador de imágenes. Conéctate a internet y vuelve a intentar.', 'error'); return; }
+    if (typeof html2canvas !== 'function') { showToast('No se cargó el generador de imágenes. Comprueba tu conexión e inténtalo de nuevo.', 'error'); return; }
+    const downloadBtn = document.getElementById('downloadPedigreeBtn');
+    if (downloadBtn && downloadBtn.disabled) return;
+    const originalBtnText = downloadBtn ? downloadBtn.innerHTML : '';
+    if (downloadBtn) {
+        downloadBtn.disabled = true;
+        downloadBtn.innerText = '⏳ Preparando imagen...';
+        downloadBtn.style.opacity = '0.75';
+    }
 
     // Tamaño carta horizontal: 11 × 8.5 pulgadas, a 144 ppp.
     // Composición independiente de la pantalla: nunca capturar el árbol escalado del móvil.
@@ -4457,17 +4465,19 @@ async function downloadPedigreeImage() {
     document.body.appendChild(sheet);
     const filename = `${(breederInfo.name || 'Pedigri').replace(/[^a-zA-Z0-9]/g, '_')}-${anillo}.png`;
     try {
-        await document.fonts.ready;
-        // Esperar a que las fotos clonadas (y el logo) estén listas antes de exportar.
-        await Promise.all(Array.from(sheet.querySelectorAll('img')).map(img => {
-            if (img.complete && img.naturalWidth > 0) return Promise.resolve();
-            return img.decode ? img.decode().catch(() => {}) : new Promise(resolve => {
-                img.onload = resolve; img.onerror = resolve;
-            });
-        }));
-        const canvas = await html2canvas(sheet, {scale:1, backgroundColor:'#fff',useCORS:true,
-            allowTaint:false, logging:false, width:W,height:H,windowWidth:W,windowHeight:H,
-            scrollX:0,scrollY:0});
+        // No esperar a img.decode() de fotografías clonadas: en Safari/iPhone
+        // esa promesa puede quedar pendiente y el botón parece no responder.
+        // html2canvas se encarga de cargar las imágenes del árbol y del logo.
+        if (document.fonts && document.fonts.ready) {
+            await Promise.race([document.fonts.ready, new Promise(resolve => setTimeout(resolve, 2500))]);
+        }
+        if (downloadBtn) downloadBtn.innerText = '⏳ Generando PNG...';
+        const canvas = await Promise.race([
+            html2canvas(sheet, {scale:1, backgroundColor:'#fff',useCORS:true,
+                allowTaint:false, logging:false, width:W,height:H,windowWidth:W,windowHeight:H,
+                scrollX:0,scrollY:0, imageTimeout:10000}),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('La generación tardó demasiado. Vuelve a intentarlo.')), 25000))
+        ]);
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
         if (!blob) throw new Error('No se pudo crear el PNG');
         if (window.Android && window.Android.saveFile) {
@@ -4489,7 +4499,14 @@ async function downloadPedigreeImage() {
     } catch(err) {
         console.error('Error al exportar pedigrí:',err);
         showToast('No se pudo generar el pedigrí: '+err.message,'error');
-    } finally { sheet.remove(); }
+    } finally {
+        sheet.remove();
+        if (downloadBtn) {
+            downloadBtn.disabled = false;
+            downloadBtn.innerHTML = originalBtnText;
+            downloadBtn.style.opacity = '';
+        }
+    }
 }
 
 function showToast(message, type = "info") {
