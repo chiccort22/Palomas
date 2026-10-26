@@ -975,6 +975,13 @@ body:not(.my-pigeons-mode):not(.inflight-mode) #birdViewSwitcher{display:none}
 #birdFilterPanel select{min-width:0;background:var(--bg);color:var(--text)}
 #birdFilterClear{grid-column:1/-1;background:var(--primary);color:white;border:0;border-radius:9px;padding:10px}
 body:not(.my-pigeons-mode):not(.inflight-mode) #birdToolbar,body:not(.my-pigeons-mode):not(.inflight-mode) #birdFilterPanel{display:none!important}
+
+/* Foto ampliada en detalles, sin alterar las tarjetas de lista o cuadrícula */
+.pigeon-detail-photo-wrap{display:flex;justify-content:center;width:100%;}
+.pigeon-detail-photo{display:block;width:min(100%,340px);max-height:320px;object-fit:contain;border-radius:15px;background:var(--card);border:1px solid var(--border);cursor:zoom-in;}
+.pigeon-photo-lightbox{position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.93);display:flex;align-items:center;justify-content:center;padding:55px 12px 25px;}
+.pigeon-photo-lightbox img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;}
+.pigeon-photo-lightbox button{position:absolute;top:max(15px,env(safe-area-inset-top));right:16px;background:#ffffff26;color:white;border:0;border-radius:50%;width:44px;height:44px;font-size:27px;cursor:pointer;}
 </style>
 
 <style>
@@ -3578,6 +3585,22 @@ function buildDescendantListHtml(title, list) {
     return html;
 }
 
+
+function openPigeonDetailPhoto(src) {
+    if (!/^data:image\/(?:jpeg|png|webp);base64,/.test(src)) return;
+    document.getElementById('pigeonPhotoLightbox')?.remove();
+    const modal = document.createElement('div');
+    modal.id = 'pigeonPhotoLightbox';
+    modal.className = 'pigeon-photo-lightbox';
+    modal.setAttribute('role','dialog');
+    modal.setAttribute('aria-label','Fotografía ampliada de la paloma');
+    const img = document.createElement('img'); img.src = src; img.alt = 'Fotografía ampliada';
+    const close = document.createElement('button'); close.type='button'; close.textContent='×'; close.setAttribute('aria-label','Cerrar fotografía');
+    close.onclick = () => modal.remove();
+    modal.onclick = e => { if (e.target === modal) modal.remove(); };
+    modal.append(img,close); document.body.append(modal); close.focus();
+}
+
 function buildDetailsContent(p) {
     const pedigree = getPedigreePath(p);
 
@@ -3656,8 +3679,13 @@ function buildDetailsContent(p) {
 
 
     // --- CONTENIDO FINAL ---
+    // Mostrar la fotografía solo si existe una imagen válida guardada.
+    const detailPhotoHtml = (p.foto && /^data:image\/(?:jpeg|png|webp);base64,/.test(p.foto))
+        ? '<div class="pigeon-detail-photo-wrap"><img class="pigeon-detail-photo" src="' + p.foto + '" alt="Fotografía de la paloma" loading="lazy" onclick="openPigeonDetailPhoto(this.src)" title="Tocar para ampliar" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();openPigeonDetailPhoto(this.src)}"></div>'
+        : '';
     let html =
         '<div class="details-row-content" style="display: flex; flex-direction: column; gap: 20px;">' +
+            detailPhotoHtml +
             '<div>' +
                 '<ul class="details-list">' +
                     '<li style="border-bottom: none;"><span class="label">Anillo:</span> <span class="value">' + p.anillo + '</span></li>' +
