@@ -976,6 +976,42 @@ body:not(.my-pigeons-mode):not(.inflight-mode) #birdViewSwitcher{display:none}
 #birdFilterClear{grid-column:1/-1;background:var(--primary);color:white;border:0;border-radius:9px;padding:10px}
 body:not(.my-pigeons-mode):not(.inflight-mode) #birdToolbar,body:not(.my-pigeons-mode):not(.inflight-mode) #birdFilterPanel{display:none!important}
 
+/* Fotografía de la paloma principal en el árbol genealógico. */
+.pigeon-card.main-pigeon.has-pedigree-photo {
+    justify-content: flex-start;
+    min-height: 275px;
+}
+.pedigree-main-photo {
+    width: 100%;
+    height: 185px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    margin: 2px auto 10px;
+    overflow: hidden;
+}
+.pedigree-main-photo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+}
+.pedigree-main-details {
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+@media (max-width: 420px) {
+    .pigeon-card.main-pigeon.has-pedigree-photo { min-height: 220px; }
+    .pigeon-card.main-pigeon.has-pedigree-photo .pedigree-main-photo { height: 128px; margin-bottom: 7px; }
+}
+
 /* Foto ampliada en detalles, sin alterar las tarjetas de lista o cuadrícula */
 .pigeon-detail-photo-wrap{display:flex;justify-content:center;width:100%;}
 .pigeon-detail-photo{display:block;width:min(100%,340px);max-height:320px;object-fit:contain;border-radius:15px;background:var(--card);border:1px solid var(--border);cursor:zoom-in;}
@@ -4145,7 +4181,8 @@ function buildDetailsContent(p) {
             if(card) {
                 card.innerHTML = '';
                 card.dataset.anillo = '';
-                card.classList.remove('pigeon-card-filled'); 
+                card.classList.remove('pigeon-card-filled');
+                card.classList.remove('has-pedigree-photo');
                 card.classList.remove('hidden'); // Asegurar que la tarjeta está visible
             }
         });
@@ -4203,19 +4240,28 @@ function buildDetailsContent(p) {
             card.classList.add('pigeon-card-filled');
             const sexIcon = getSexIcon(pigeon.sexo);
 
-            // Si la paloma es marcada como manual (no registrada), mostrar solo el número de anillo
+            // La foto aparece únicamente en la tarjeta principal, cuando está guardada.
+            // Las tarjetas de padres, abuelos y bisabuelos conservan su diseño habitual.
+            const mainPhoto = cardId === 'p-self' && !pigeon._manual &&
+                typeof pigeon.foto === 'string' &&
+                /^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(pigeon.foto)
+                ? pigeon.foto : '';
+            card.classList.toggle('has-pedigree-photo', !!mainPhoto);
+
+            // Si la paloma es manual (no registrada), mostrar solo su número de anillo.
             if (pigeon._manual) {
-                card.innerHTML = `
-                    <strong>${escapeHtml(pigeon.anillo)}</strong>
-                `;
+                card.innerHTML = `<strong>${escapeHtml(pigeon.anillo)}</strong>`;
             } else {
-                card.innerHTML = `
+                const pedigreeData = `
                     <span class="info-line">${pigeon.linea || '-'}</span>
                     <strong>${pigeon.anillo}</strong>
                     <span class="info-line">${pigeon.nombre || '-'}</span>
                     <span class="info-line">${pigeon.color || '-'} / ${formatYearDisplay(pigeon.anoNacimiento)}</span>
                     ${pigeon.resultados ? `<div class="pigeon-results">${pigeon.resultados}</div>` : ''}
                 `;
+                card.innerHTML = mainPhoto
+                    ? `<div class="pedigree-main-photo"><img src="${mainPhoto}" alt="Fotografía de la paloma ${escapeHtml(pigeon.anillo)}"></div><div class="pedigree-main-details">${pedigreeData}</div>`
+                    : pedigreeData;
             }
             
             // Mostrar las columnas de abuelos y bisabuelos si tienen contenido
@@ -4340,6 +4386,21 @@ async function downloadPedigreeImage() {
         border-top:1px dotted #ccc!important;margin-top:5px!important;padding-top:5px!important;
         text-align:left!important;width:100%!important;font-size:.84em!important;}
       .print-pedigree-card * {max-width:100%!important;box-sizing:border-box!important;}
+      /* Distribución de la primera columna con fotografía: foto arriba, datos debajo. */
+      .print-pedigree-card.print-pedigree-main-photo {justify-content:flex-start!important;}
+      .print-pedigree-main-photo .pedigree-main-photo {
+        width:100%!important;height:235px!important;max-height:34%!important;
+        flex:0 0 auto!important;margin:8px auto 10px!important;overflow:hidden!important;
+        display:flex!important;align-items:center!important;justify-content:center!important;
+      }
+      .print-pedigree-main-photo .pedigree-main-photo img {
+        width:100%!important;height:100%!important;object-fit:contain!important;
+        object-position:center!important;display:block!important;
+      }
+      .print-pedigree-main-photo .pedigree-main-details {
+        display:flex!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;
+        flex-direction:column!important;align-items:center!important;justify-content:center!important;
+      }
     `;
     sheet.appendChild(style);
     const title = document.createElement('div');
@@ -4382,10 +4443,11 @@ async function downloadPedigreeImage() {
             if (!source) return;
             const card = source.cloneNode(true);
             card.removeAttribute('id');
-            card.className = 'print-pedigree-card';
+            const hasMainPhoto = id === 'p-self' && !!card.querySelector('.pedigree-main-photo img');
+            card.className = 'print-pedigree-card' + (hasMainPhoto ? ' print-pedigree-main-photo' : '');
             const count = (card.textContent || '').length;
-            // Reducir la tipografía cuando los resultados son extensos, sin alterar datos.
-            const available = Math.max(40, cardH - 22);
+            // Reservar espacio para la foto al calcular el tamaño del texto.
+            const available = Math.max(40, cardH - 22 - (hasMainPhoto ? 245 : 0));
             const estimatedLines = Math.max(3, Math.ceil(count / Math.max(18, col.w / 9)));
             const font = Math.max(col.ids.length === 8 ? 9 : 10, Math.min(col.ids.length === 8 ? 13 : 17, available / (estimatedLines * 1.2)));
             card.style.cssText = `left:${col.x}px;top:${top+i*(cardH+gap)}px;width:${col.w}px!important;height:${cardH}px!important;font-size:${font}px!important;`;
@@ -4396,6 +4458,13 @@ async function downloadPedigreeImage() {
     const filename = `${(breederInfo.name || 'Pedigri').replace(/[^a-zA-Z0-9]/g, '_')}-${anillo}.png`;
     try {
         await document.fonts.ready;
+        // Esperar a que las fotos clonadas (y el logo) estén listas antes de exportar.
+        await Promise.all(Array.from(sheet.querySelectorAll('img')).map(img => {
+            if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+            return img.decode ? img.decode().catch(() => {}) : new Promise(resolve => {
+                img.onload = resolve; img.onerror = resolve;
+            });
+        }));
         const canvas = await html2canvas(sheet, {scale:1, backgroundColor:'#fff',useCORS:true,
             allowTaint:false, logging:false, width:W,height:H,windowWidth:W,windowHeight:H,
             scrollX:0,scrollY:0});
