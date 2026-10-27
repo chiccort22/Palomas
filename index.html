@@ -1130,6 +1130,46 @@ body:not(.my-pigeons-mode):not(.inflight-mode) #birdToolbar,body:not(.my-pigeons
 .pigeon-profile-buttons .btn-danger{background:var(--danger)!important;color:#fff!important;opacity:1!important;border:0!important}
 .pigeon-profile-buttons .btn-danger:hover{filter:brightness(.94)}
 
+
+/* Selectores propios de Palomas Pro: los valores siguen en los select originales. */
+.pp-select-wrap{position:relative;width:100%;min-width:0}
+.pp-select-wrap>select.pp-native-select{position:absolute!important;width:1px!important;height:1px!important;min-height:0!important;padding:0!important;margin:0!important;border:0!important;opacity:0!important;pointer-events:none!important;overflow:hidden!important;top:50%;left:8px}
+.pp-select-trigger{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-width:0;min-height:46px;box-sizing:border-box;padding:11px 13px;border:1px solid var(--border);border-radius:12px;background:var(--bg);color:var(--text);font:inherit;font-size:15px;text-align:left;cursor:pointer}
+.pp-select-trigger .pp-select-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.pp-select-trigger .pp-select-chevron{font-size:13px;opacity:.6;flex:none}
+.pp-select-trigger:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pp-select-trigger:disabled{opacity:.45;cursor:not-allowed}
+.pp-picker[hidden]{display:none!important}
+.pp-picker{position:fixed;inset:0;z-index:13000;display:flex;align-items:flex-end;justify-content:center;background:rgba(12,18,22,.52);padding:12px 12px max(12px,env(safe-area-inset-bottom,0px));box-sizing:border-box}
+.pp-picker-sheet{width:min(100%,500px);max-height:min(82dvh,700px);display:flex;flex-direction:column;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:22px;box-shadow:0 18px 55px rgba(0,0,0,.22);overflow:hidden}
+.pp-picker-top{display:flex;align-items:center;gap:10px;justify-content:space-between;padding:18px 18px 12px}
+.pp-picker-title{font-size:18px;font-weight:750;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.pp-picker-close{width:37px;height:37px;flex:none;border:1px solid var(--border);border-radius:11px;background:var(--bg);color:var(--text);font-size:17px;display:grid;place-items:center;cursor:pointer}
+.pp-picker-search-wrap{padding:0 18px 12px}
+.pp-picker-search{width:100%;height:44px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:16px;padding:0 13px;box-sizing:border-box}
+.pp-picker-options{overflow-y:auto;overscroll-behavior:contain;padding:0 12px 14px;min-height:70px}
+.pp-picker-option{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:50px;text-align:left;padding:12px 14px;border:0;border-bottom:1px solid var(--border);background:transparent;color:var(--text);font:inherit;font-size:15px;cursor:pointer;border-radius:9px}
+.pp-picker-option[aria-selected="true"]{background:var(--bg);font-weight:700}
+.pp-picker-option i{color:var(--accent);flex:none}
+.pp-picker-option:disabled{opacity:.4;cursor:not-allowed}
+.pp-picker-empty{padding:22px 12px;color:var(--text);opacity:.7;text-align:center;font-size:14px}
+@media(min-width:700px){.pp-picker{align-items:center}}
+
+
+/* Calendario y validaciones integrados con el diseño de la ficha */
+.pp-date-trigger{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:12px 14px;border:1px solid var(--border);border-radius:13px;background:var(--bg);color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.pp-date-trigger span{flex:1}.pp-date-trigger i:last-child{opacity:.55;font-size:12px}
+.pp-date-trigger:focus-visible,.pp-date-icon:focus-visible,.pp-date-days button:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+.pp-date-overlay[hidden]{display:none!important}
+.pp-date-overlay{position:fixed;inset:0;z-index:13000;display:flex;justify-content:center;align-items:center;padding:16px;background:rgba(9,17,23,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.pp-date-card{width:min(100%,380px);box-sizing:border-box;border-radius:20px;border:1px solid var(--border);padding:20px;background:var(--card);color:var(--text);box-shadow:0 18px 55px rgba(0,0,0,.18)}
+.pp-date-top,.pp-date-nav{display:flex;align-items:center;justify-content:space-between;gap:10px}.pp-date-top h2{font-size:19px;margin:0;font-weight:750}.pp-date-nav{margin:20px 0 12px}.pp-date-nav strong{text-transform:capitalize;font-size:16px}
+.pp-date-icon{width:40px;height:40px;display:grid;place-items:center;border:1px solid var(--border);border-radius:12px;background:var(--bg);color:var(--text);cursor:pointer}
+.pp-date-week,.pp-date-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center}.pp-date-week{font-size:12px;opacity:.65;font-weight:700;margin-bottom:8px}.pp-date-days button{aspect-ratio:1;min-width:0;padding:0;border:0;border-radius:11px;background:transparent;color:var(--text);font:inherit;cursor:pointer}.pp-date-days button:hover{background:var(--bg)}.pp-date-days button[aria-pressed="true"]{background:#41474c;color:#fff;font-weight:750}.pp-date-days button.pp-date-today:not([aria-pressed="true"]){outline:1px solid var(--border);outline-offset:-2px}
+.pp-date-actions{display:flex;gap:10px;margin-top:20px}.pp-date-actions button{flex:1;min-height:44px;border:1px solid var(--border);border-radius:12px;background:var(--bg);color:var(--text);font:inherit;font-weight:650;cursor:pointer}.pp-date-actions #ppDateToday{background:#41474c;color:#fff;border-color:#41474c}
+.pp-form-error{color:#c0392b;font-size:12px;margin-top:6px;line-height:1.4}.pp-field-invalid{border-color:#c0392b!important;outline-color:#c0392b!important}
+:root.dark .pp-date-days button[aria-pressed="true"],:root.dark .pp-date-actions #ppDateToday{background:#e2e4e6;color:#202326}
+
 </style>
 
 <style>
@@ -1385,7 +1425,7 @@ th,
                     <span class="pigeon-form-top-spacer" aria-hidden="true"></span>
                 </div>
                 <div id="formContent" class="form-content">
-                    <form id="pigeonForm">
+                    <form id="pigeonForm" novalidate>
                         <section class="pigeon-form-hero" aria-label="Fotografía de la paloma">
                             <div class="pigeon-form-photo-wrap">
                                 <img id="pigeonPhotoPreview" alt="Fotografía de la paloma" style="display:none;">
@@ -1526,7 +1566,7 @@ th,
             <p style="color: #666; font-size: 1.1em; margin-bottom: 20px;">
                 <i class="fas fa-user-circle" style="color: var(--text);"></i> Introduce tus datos para que aparezcan en la parte superior del Pedigrí.
             </p>
-            <form id="breederForm">
+            <form id="breederForm" novalidate>
                 <div class="form-group">
                     <label>Nombre del Criador / Palomar (Opcional):</label>
                     <input type="text" id="breederName" placeholder="Ej: Palomar Etc" maxlength="100">
@@ -1559,7 +1599,7 @@ th,
         <!-- Sección: Parejas Activas -->
         <div id="activePairsContainer" class="form-box" style="display: none;">
             <div id="tabRegister" style="display:none;">
-                <form id="activePairForm" onsubmit="saveActivePair(event)">
+                <form id="activePairForm" novalidate onsubmit="saveActivePair(event)">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap:10px; padding:10px;">
                         <div class="form-group">
                             <label>Macho:</label>
@@ -1581,7 +1621,8 @@ th,
                     <div style="padding:10px;">
                         <div class="form-group">
                             <label>Fecha de postura:</label>
-                            <input type="date" id="pairFechaPuesta" style="width:100%; box-sizing:border-box;" />
+                            <input type="hidden" id="pairFechaPuesta" />
+                            <button type="button" id="ppDateTrigger" class="pp-date-trigger" aria-haspopup="dialog" aria-controls="ppDateDialog"><i class="far fa-calendar-alt" aria-hidden="true"></i><span id="ppDateLabel">Seleccionar fecha</span><i class="fas fa-chevron-down" aria-hidden="true"></i></button>
                             <small style="color:#666; display:block; margin-top:6px;">Se programará un recordatorio de eclosión 18 días después de la fecha de postura.</small>
                         </div>
                     </div>
@@ -1599,7 +1640,7 @@ th,
         </div>
 
         <section id="quickResultsContainer" style="display:none;padding:18px 14px 90px;color:var(--text)">
-          <form id="quickResultsForm" style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;display:grid;gap:14px">
+          <form id="quickResultsForm" novalidate style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;display:grid;gap:14px">
             <div><label for="qrPlace">Lugar de suelta / competencia</label><input id="qrPlace" maxlength="100" placeholder="Ej. Cro. Altamira, Zac." required></div>
             <div><label for="qrDistance">Distancia (km)</label><input id="qrDistance" type="number" min="0.1" max="9999" step="any" inputmode="decimal" placeholder="Ej. 299" required></div>
             <div><label for="qrBird">Paloma (solo En Vuelo)</label><select id="qrBird" required></select></div>
@@ -1727,6 +1768,17 @@ th,
       <button type="button" id="appDialogCancel" class="app-dialog-cancel">Cancelar</button>
       <button type="button" id="appDialogAccept" class="app-dialog-accept">Confirmar</button>
     </div>
+  </div>
+</div>
+
+<!-- Calendario de Palomas Pro: fecha ISO conservada en pairFechaPuesta. -->
+<div id="ppDateDialog" class="pp-date-overlay" role="dialog" aria-modal="true" aria-labelledby="ppDateTitle" hidden>
+  <div class="pp-date-card">
+    <div class="pp-date-top"><h2 id="ppDateTitle">Fecha de postura</h2><button type="button" id="ppDateClose" class="pp-date-icon" aria-label="Cerrar calendario"><i class="fas fa-times"></i></button></div>
+    <div class="pp-date-nav"><button type="button" id="ppDatePrev" class="pp-date-icon" aria-label="Mes anterior"><i class="fas fa-chevron-left"></i></button><strong id="ppDateMonth"></strong><button type="button" id="ppDateNext" class="pp-date-icon" aria-label="Mes siguiente"><i class="fas fa-chevron-right"></i></button></div>
+    <div class="pp-date-week" aria-hidden="true"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+    <div id="ppDateDays" class="pp-date-days" role="group" aria-label="Días del mes"></div>
+    <div class="pp-date-actions"><button type="button" id="ppDateClear">Quitar fecha</button><button type="button" id="ppDateToday">Hoy</button></div>
   </div>
 </div>
 
@@ -2442,7 +2494,7 @@ function appAlert(message, opts = {}) { return appDialogManager(message, {...opt
         const fMan = document.getElementById('pairFatherManual'); if (fMan) { fMan.value = ''; fMan.style.display = 'none'; }
         const mMan = document.getElementById('pairMotherManual'); if (mMan) { mMan.value = ''; mMan.style.display = 'none'; }
         const pNotes = document.getElementById('pairNotes'); if (pNotes) pNotes.value = '';
-        const fecha = document.getElementById('pairFechaPuesta'); if (fecha) { fecha.value = ''; }
+        const fecha = document.getElementById('pairFechaPuesta'); if (fecha) { fecha.value = ''; fecha.dispatchEvent(new Event('change',{bubbles:true})); }
         // Reset editing state
         editingActivePairId = null;
         const saveBtn = document.getElementById('savePairBtn'); if (saveBtn) saveBtn.innerText = 'Guardar Pareja';
@@ -2658,7 +2710,7 @@ function appAlert(message, opts = {}) { return appDialogManager(message, {...opt
 
         const pNotes = document.getElementById('pairNotes'); if (pNotes) pNotes.value = p.notes || '';
         // fecha de puesta
-        const fechaInput = document.getElementById('pairFechaPuesta'); if (fechaInput) { fechaInput.value = p.fechaPuesta || ''; }
+        const fechaInput = document.getElementById('pairFechaPuesta'); if (fechaInput) { fechaInput.value = p.fechaPuesta || ''; fechaInput.dispatchEvent(new Event('change',{bubbles:true})); }
     }
 
     function updateActivePairSummary() {
@@ -5303,6 +5355,166 @@ window.addEventListener('storage',e=>{if(e.key==='misPalomas')syncFlightBirds();
 drawRows();drawWeekly();
 try { syncFlightBirds(); } catch(e) { console.warn("Sincronización de velocidades", e); }
 
+})();
+</script>
+
+<script>
+/* Selector propio: conserva el <select> y sus eventos para no cambiar la lógica de la app. */
+(function(){
+  'use strict';
+  const ids=['etiqueta','padreSelect','madreSelect','pairFatherSelect','pairMotherSelect','qrBird','birdFilterSex','birdFilterYear'];
+  const names={etiqueta:'Seleccionar etiqueta',padreSelect:'Seleccionar padre',madreSelect:'Seleccionar madre',pairFatherSelect:'Seleccionar macho',pairMotherSelect:'Seleccionar hembra',qrBird:'Seleccionar paloma',birdFilterSex:'Filtrar por sexo',birdFilterYear:'Filtrar por año'};
+  const overlay=document.createElement('div');overlay.className='pp-picker';overlay.id='ppPicker';overlay.hidden=true;
+  overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','ppPickerTitle');
+  overlay.innerHTML='<div class="pp-picker-sheet"><div class="pp-picker-top"><span class="pp-picker-title" id="ppPickerTitle"></span><button class="pp-picker-close" type="button" aria-label="Cerrar selector"><i class="fas fa-times"></i></button></div><div class="pp-picker-search-wrap"><input type="search" class="pp-picker-search" placeholder="Buscar..." aria-label="Buscar opción" autocomplete="off"></div><div class="pp-picker-options" role="listbox"></div></div>';
+  document.body.appendChild(overlay);
+  const title=overlay.querySelector('.pp-picker-title'), search=overlay.querySelector('.pp-picker-search'), list=overlay.querySelector('.pp-picker-options'), closeBtn=overlay.querySelector('.pp-picker-close');
+  let active=null,returnFocus=null;
+  const bindings=[];
+  const sync=()=>bindings.forEach(({select,button})=>{
+    const option=select.selectedOptions&&select.selectedOptions[0];
+    button.querySelector('.pp-select-text').textContent=option?option.textContent.trim():'Seleccionar...';
+    button.disabled=select.disabled;
+    button.setAttribute('aria-expanded',String(!overlay.hidden&&active===select));
+  });
+  function close(){if(overlay.hidden)return;overlay.hidden=true;active=null;search.value='';sync();if(returnFocus&&returnFocus.isConnected)returnFocus.focus({preventScroll:true});returnFocus=null;}
+  function render(){
+    if(!active)return;
+    const term=search.value.trim().toLocaleLowerCase();list.replaceChildren();
+    const opts=Array.from(active.options).filter(o=>!o.hidden&&(!term||o.textContent.toLocaleLowerCase().includes(term)));
+    if(!opts.length){const empty=document.createElement('div');empty.className='pp-picker-empty';empty.textContent='No se encontraron opciones';list.appendChild(empty);return;}
+    opts.forEach(o=>{
+      const b=document.createElement('button');b.type='button';b.className='pp-picker-option';b.setAttribute('role','option');b.setAttribute('aria-selected',String(o.selected));b.disabled=o.disabled;
+      const txt=document.createElement('span');txt.textContent=o.textContent.trim();b.appendChild(txt);
+      if(o.selected){const check=document.createElement('i');check.className='fas fa-check';check.setAttribute('aria-hidden','true');b.appendChild(check);}
+      b.addEventListener('click',()=>{
+        if(!active||o.disabled)return;
+        const target=active;
+        target.value=o.value;
+        target.dispatchEvent(new Event('input',{bubbles:true}));
+        target.dispatchEvent(new Event('change',{bubbles:true}));
+        close();sync();
+      });list.appendChild(b);
+    });
+  }
+  function open(select,button){if(select.disabled)return;active=select;returnFocus=button;title.textContent=names[select.id]||'Seleccionar opción';search.value='';overlay.hidden=false;sync();render();
+    const total=Array.from(select.options).filter(o=>!o.hidden).length;
+    overlay.querySelector('.pp-picker-search-wrap').hidden=total<=6;
+    if(total>6)search.focus({preventScroll:true});else closeBtn.focus({preventScroll:true});
+  }
+  ids.forEach(id=>{
+    const select=document.getElementById(id);if(!select||select.dataset.ppEnhanced)return;
+    select.dataset.ppEnhanced='true';select.classList.add('pp-native-select');
+    const wrap=document.createElement('div');wrap.className='pp-select-wrap';select.parentNode.insertBefore(wrap,select);wrap.appendChild(select);
+    const button=document.createElement('button');button.type='button';button.className='pp-select-trigger';button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-expanded','false');
+    button.innerHTML='<span class="pp-select-text"></span><i class="fas fa-chevron-down pp-select-chevron" aria-hidden="true"></i>';
+    wrap.appendChild(button);button.addEventListener('click',()=>open(select,button));
+    const label=document.querySelector('label[for="'+id+'"]');if(label)label.addEventListener('click',e=>{e.preventDefault();button.click();});
+    select.addEventListener('change',sync);
+    new MutationObserver(sync).observe(select,{childList:true,subtree:true,attributes:true,characterData:true});
+    bindings.push({select,button});
+  });
+  overlay.addEventListener('click',e=>{if(e.target===overlay)close();});
+  closeBtn.addEventListener('click',close);
+  search.addEventListener('input',render);
+  document.addEventListener('keydown',e=>{if(!overlay.hidden&&e.key==='Escape'){e.preventDefault();close();}});
+  document.addEventListener('click',()=>requestAnimationFrame(sync),true);
+  document.addEventListener('focusin',()=>requestAnimationFrame(sync));
+  sync();
+})();
+</script>
+
+<script>
+/* Calendario propio y validación de formularios sin globos del navegador. */
+(function(){
+  'use strict';
+  const input=document.getElementById('pairFechaPuesta');
+  const trigger=document.getElementById('ppDateTrigger');
+  const label=document.getElementById('ppDateLabel');
+  const overlay=document.getElementById('ppDateDialog');
+  const monthText=document.getElementById('ppDateMonth');
+  const days=document.getElementById('ppDateDays');
+  const fmt=new Intl.DateTimeFormat('es-MX',{month:'long',year:'numeric'});
+  let shown=new Date(),previousFocus=null;
+  const pad=n=>String(n).padStart(2,'0');
+  const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+  function sync(){
+    const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(input.value);
+    label.textContent=m?m[3]+'/'+m[2]+'/'+m[1]:'Seleccionar fecha';
+  }
+  function draw(){
+    monthText.textContent=fmt.format(shown);
+    days.replaceChildren();
+    const y=shown.getFullYear(),m=shown.getMonth();
+    const first=(new Date(y,m,1).getDay()+6)%7;
+    const count=new Date(y,m+1,0).getDate();
+    for(let i=0;i<first;i++){const blank=document.createElement('span');blank.setAttribute('aria-hidden','true');days.append(blank);}
+    for(let d=1;d<=count;d++){
+      const btn=document.createElement('button');btn.type='button';btn.textContent=d;
+      const date=new Date(y,m,d),val=iso(date);
+      btn.setAttribute('aria-label',date.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'}));
+      btn.setAttribute('aria-pressed',String(input.value===val));
+      if(val===iso(new Date()))btn.classList.add('pp-date-today');
+      btn.addEventListener('click',()=>choose(val));days.append(btn);
+    }
+  }
+  function choose(value){input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));sync();close();}
+  function open(){
+    previousFocus=document.activeElement;
+    const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(input.value);
+    shown=m?new Date(+m[1],+m[2]-1,1):new Date();
+    shown.setDate(1);draw();overlay.hidden=false;document.getElementById('ppDateClose').focus();
+  }
+  function close(){overlay.hidden=true;if(previousFocus?.isConnected)previousFocus.focus({preventScroll:true});}
+  trigger.addEventListener('click',open);
+  document.getElementById('ppDateClose').addEventListener('click',close);
+  document.getElementById('ppDatePrev').addEventListener('click',()=>{shown=new Date(shown.getFullYear(),shown.getMonth()-1,1);draw();});
+  document.getElementById('ppDateNext').addEventListener('click',()=>{shown=new Date(shown.getFullYear(),shown.getMonth()+1,1);draw();});
+  document.getElementById('ppDateClear').addEventListener('click',()=>choose(''));
+  document.getElementById('ppDateToday').addEventListener('click',()=>choose(iso(new Date())));
+  overlay.addEventListener('click',e=>{if(e.target===overlay)close();});
+  document.addEventListener('keydown',e=>{if(overlay.hidden)return;if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close();}if(e.key==='Tab'){const controls=Array.from(overlay.querySelectorAll('button:not([disabled])'));const a=controls[0],z=controls[controls.length-1];if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus();}else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus();}}},true);
+  input.addEventListener('change',sync);
+  // El valor también se asigna por código al editar o limpiar parejas.
+  const observe=()=>sync();
+  document.getElementById('activePairForm').addEventListener('reset',()=>requestAnimationFrame(observe));
+  // Al volver a mostrar el formulario, refrescar el texto de fecha.
+  document.addEventListener('click',()=>requestAnimationFrame(sync),true);
+  sync();
+})();
+(function(){
+  'use strict';
+  const forms=['pigeonForm','breederForm','activePairForm','quickResultsForm'];
+  function message(el){
+    const v=el.validity;
+    const name=(el.closest('div')?.querySelector('label')?.textContent||document.querySelector('label[for="'+el.id+'"]')?.textContent||el.getAttribute('aria-label')||'Este campo').replace(/[:*]/g,'').trim();
+    if(v.valueMissing)return 'Completa el campo «'+name+'». ';
+    if(v.badInput||v.typeMismatch)return 'Introduce un valor válido en «'+name+'». ';
+    if(v.rangeUnderflow)return '«'+name+'» debe ser al menos '+el.min+'.';
+    if(v.rangeOverflow)return '«'+name+'» no puede superar '+el.max+'.';
+    if(v.stepMismatch)return 'Introduce un número entero válido en «'+name+'». ';
+    if(v.patternMismatch)return 'Revisa el formato de «'+name+'». '+(el.title||'');
+    if(v.tooLong)return '«'+name+'» tiene demasiados caracteres.';
+    return 'Revisa el valor de «'+name+'». ';
+  }
+  forms.forEach(id=>{
+    const form=document.getElementById(id);if(!form)return;
+    form.noValidate=true;
+    form.addEventListener('submit',e=>{
+      const fields=Array.from(form.elements).filter(el=>el.willValidate&&!el.disabled);
+      const invalid=fields.find(el=>!el.validity.valid);
+      if(!invalid)return;
+      e.preventDefault();e.stopImmediatePropagation();
+      form.querySelectorAll('.pp-form-error').forEach(el=>el.remove());
+      form.querySelectorAll('.pp-field-invalid').forEach(el=>el.classList.remove('pp-field-invalid'));
+      const msg=message(invalid);
+      const target=invalid.classList.contains('pp-native-select')?invalid.parentElement.querySelector('.pp-select-trigger'):invalid;
+      if(target){target.classList.add('pp-field-invalid');const error=document.createElement('div');error.className='pp-form-error';error.textContent=msg;(target.closest('.pp-select-wrap')||target).insertAdjacentElement('afterend',error);}
+      Promise.resolve(typeof appAlert==='function'?appAlert(msg,{title:'Revisa el formulario'}):null).then(()=>{if(target?.isConnected){target.scrollIntoView({behavior:'smooth',block:'center'});target.focus({preventScroll:true});}});
+    },true);
+    form.addEventListener('input',e=>{const el=e.target;el.classList?.remove('pp-field-invalid');form.querySelectorAll('.pp-form-error').forEach(x=>x.remove());});
+    form.addEventListener('change',e=>{const el=e.target;const target=el.classList?.contains('pp-native-select')?el.parentElement.querySelector('.pp-select-trigger'):el;target?.classList?.remove('pp-field-invalid');form.querySelectorAll('.pp-form-error').forEach(x=>x.remove());});
+  });
 })();
 </script>
 </body>
