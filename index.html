@@ -1420,7 +1420,7 @@ th,
             <h2 id="formTitle" style="display: none;"></h2>
             <div class="pigeon-form-inner">
                 <div class="pigeon-form-top">
-                    <button type="button" class="pigeon-profile-icon" onclick="cancelEdit()" aria-label="Volver a Mis Palomas"><i class="fas fa-arrow-left"></i></button>
+                    <button type="button" class="pigeon-profile-icon" onclick="cancelEdit()" aria-label="Volver a la vista anterior"><i class="fas fa-arrow-left"></i></button>
                     <strong id="pigeonFormModeTitle">Registrar paloma</strong>
                     <span class="pigeon-form-top-spacer" aria-hidden="true"></span>
                 </div>
@@ -3276,7 +3276,7 @@ if (window.Android) {
                 setHeaderBack(true, function(){ showView('config'); });
             } else if (viewName === 'register') {
                 // En la vista de registro de paloma, la flecha vuelve a la tabla principal
-                setHeaderBack(true, function(){ showPigeonTable(); });
+                setHeaderBack(true, function(){ cancelEdit(); });
             } else if (viewName === 'pedigree-picker' || viewName === 'pedigree-view') {
                 // En Pedigrí, la flecha vuelve a la lista principal
                 setHeaderBack(true, function(){ showPigeonTable(); });
@@ -3323,6 +3323,7 @@ if (window.Android) {
     }
 
 function openRegisterForm() {
+    pigeonEditReturn = null;
     isEditing = false;
 
     showView('register');
@@ -3690,8 +3691,15 @@ if (window.Android) {
 } else {
     showToast("Paloma actualizada", "success");
 }
-            showPigeonTable();
-            cancelEdit();
+            // Guardar antes de navegar y volver a la ficha de la paloma editada.
+            saveData();
+            const returnContext = pigeonEditReturn;
+            resetPigeonEditForm();
+            pigeonEditReturn = null;
+            updateSelects();
+            updateActivePairSelects();
+            returnAfterPigeonEdit(nuevoAnillo, returnContext, true);
+            return;
         }
     } else {
         if (pigeons.some(p => p.anillo === nuevoAnillo)) { // Usar nuevoAnillo para el registro
@@ -3892,10 +3900,21 @@ async function exportData() {
 
     // --- FUNCIONES DE ACCIÓN ---
 
-    function prepareEdit(anillo) {
+    // Conserva el lugar desde el que se inició una edición (lista o ficha).
+    let pigeonEditReturn = null;
+
+    function prepareEdit(anillo, fromProfile = false) {
         const p = pigeons.find(item => item.anillo === anillo);
         if(!p) return;
-        
+        const sourceView = currentView === 'inflight' ? 'inflight' : 'table';
+        pigeonEditReturn = {
+            view: sourceView,
+            profile: !!fromProfile,
+            tab: fromProfile ? pigeonProfileTab : 'datos',
+            scroll: fromProfile ? pigeonProfileListScroll : window.scrollY,
+            ring: anillo
+        };
+
         showView('register');
         isEditing = true;
         
@@ -3968,7 +3987,7 @@ async function exportData() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-function cancelEdit() {
+function resetPigeonEditForm() {
     isEditing = false;
     form.reset();
     clearPigeonPhoto();
@@ -3995,11 +4014,38 @@ function cancelEdit() {
     
     formTitle.innerText = "";
     formTitle.style.display = 'none';
-
-    showPigeonTable();
+    delete anilloInput.dataset.originalAnillo;
 }
 
-    
+function returnAfterPigeonEdit(anillo, context, openProfile) {
+    const saved = context || {view:'table', profile:false, tab:'datos', scroll:0};
+    const pigeon = pigeons.find(p => String(p.anillo) === String(anillo));
+    // Si dejó de estar En Vuelo, su ficha debe regresar a Mis Palomas.
+    const stillInFlight = pigeon && (pigeon.tag === 'En Vuelo' || pigeon.etiqueta === 'En Vuelo');
+    const destination = saved.view === 'inflight' && stillInFlight ? 'inflight' : 'table';
+    showView(destination);
+    renderTable();
+    if (openProfile && pigeon) {
+        pigeonProfileOrigin = destination;
+        pigeonProfileListScroll = saved.scroll || 0;
+        openPigeonProfile(anillo, saved.tab || 'datos', true);
+    } else if (saved.scroll) {
+        window.scrollTo({top:saved.scroll,behavior:'instant'});
+    }
+}
+
+function cancelEdit() {
+    const context = pigeonEditReturn;
+    const wasEditing = isEditing;
+    resetPigeonEditForm();
+    pigeonEditReturn = null;
+    if (wasEditing && context) {
+        returnAfterPigeonEdit(context.ring, context, context.profile);
+    } else {
+        showPigeonTable();
+    }
+}
+
     /** * Lógica de borrado de paloma (MODIFICADA para confirmación nativa Android)
      */
     function deletePigeon(anillo) {
@@ -4155,7 +4201,7 @@ function cancelEdit() {
     document.getElementById('pigeonProfileEdit').addEventListener('click', () => {
         const ring = pigeonProfileRing;
         closePigeonProfile();
-        if (ring) prepareEdit(ring);
+        if (ring) prepareEdit(ring, true);
     });
     document.querySelectorAll('[data-profile-tab]').forEach(button => button.addEventListener('click', () => {
         pigeonProfileTab = button.dataset.profileTab;
@@ -4170,7 +4216,7 @@ function cancelEdit() {
         if (!action) return;
         if (action === 'pedigree') { openProfilePedigree(); return; }
         const ring = pigeonProfileRing;
-        if (action === 'edit') { closePigeonProfile(); prepareEdit(ring); }
+        if (action === 'edit') { closePigeonProfile(); prepareEdit(ring, true); }
         if (action === 'delete') deletePigeon(ring);
     });
     document.addEventListener('keydown', e => {
