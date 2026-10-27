@@ -4210,7 +4210,7 @@ function cancelEdit() {
         const photo = e.target.closest('[data-profile-photo]');
         if (photo) { openPigeonDetailPhoto(photo.src); return; }
         const relative = e.target.closest('[data-profile-ring]');
-        if (relative) { openPigeonProfile(relative.dataset.profileRing,pigeonProfileTab,true); return; }
+        if (relative) { openPigeonProfile(relative.dataset.profileRing, pigeonProfileTab === 'crias' ? 'datos' : pigeonProfileTab, true); return; }
         const action = e.target.closest('[data-profile-action]')?.dataset.profileAction;
         if (!action) return;
         if (action === 'pedigree') { openProfilePedigree(); return; }
