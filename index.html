@@ -1394,8 +1394,8 @@ th,
         <a href="javascript:void(0)" onclick="showPigeonTable()"><i class="fas fa-table"></i> Mis Palomas <span class="sidebar-count" id="count-mis">0</span></a>
         <a href="javascript:void(0)" onclick="openInFlightPigeons()"><i class="fas fa-wind"></i> En Vuelo <span class="sidebar-count" id="count-inflight">0</span></a>
         <a href="javascript:void(0)" onclick="openActivePairs()"><i class="fas fa-heart"></i> Parejas Activas <span class="sidebar-count" id="count-pairs">0</span></a>
-    <a href="javascript:void(0)" onclick="showView('quick-results')"><i class="fas fa-trophy"></i> Registrar Resultados</a>
-    <a href="javascript:void(0)" onclick="closeNav(); showView('velocities')"><i class="fas fa-stopwatch"></i> Velocidades Individuales</a>
+    <a href="javascript:void(0)" onclick="showView('quick-results')"><i class="fas fa-trophy"></i> Reg. Resultados</a>
+    <a href="javascript:void(0)" onclick="closeNav(); showView('velocities')"><i class="fas fa-stopwatch"></i> Velocidades Indiv.</a>
     <a href="javascript:void(0)" onclick="openTrash()"><i class="fas fa-trash"></i> Papelera</a>
     <a href="javascript:void(0)" onclick="openConfig()"><i class="fas fa-cog"></i> Configuración</a>
 
@@ -1647,7 +1647,7 @@ th,
             <div><label for="qrPosition">Lugar obtenido</label><input id="qrPosition" type="number" min="1" step="1" inputmode="numeric" placeholder="Ej. 1" required></div>
             <div style="background:var(--bg);padding:12px;border-radius:10px;font-size:14px"><strong>Se agregará a Notas:</strong><div id="qrPreview" style="margin-top:6px;white-space:pre-wrap"></div></div>
             <button type="submit" class="btn btn-primary">Guardar resultado</button>
-            <small style="color:var(--text);opacity:.75">La competencia y distancia permanecen para registrar otra paloma. Cada resultado se añade al final de las notas existentes.</small>
+            <small style="color:var(--text);opacity:.75">La competencia y distancia permanecen para registrar otra paloma. Cada resultado se añade al final de las notas.</small>
           </form>
         </section>
         <div id="velocityContainer" style="display:none">
@@ -1707,7 +1707,7 @@ th,
         <div id="pedigreeViewSection" style="display: none;">
             
             <div class="pedigree-buttons-bar">
-                <button type="button" id="downloadPedigreeBtn" onclick="downloadPedigreeImage()" class="btn btn-download"><i class="fas fa-camera" aria-hidden="true"></i> Descargar Pedigrí como Imagen</button>
+                <button type="button" id="downloadPedigreeBtn" onclick="downloadPedigreeImage()" class="btn btn-download"><i class="fas fa-camera" aria-hidden="true"></i> Descargar Pedigrí</button>
             </div>
             
             <div id="pedigreePreviewViewport" aria-label="Vista previa del pedigrí igual a la imagen descargada"></div>
@@ -2397,7 +2397,7 @@ function appAlert(message, opts = {}) { return appDialogManager(message, {...opt
             const moved=attachRowSwipe(shell,front);
             shell.append(actions,front);
             const footer=document.createElement('div');footer.className='pair-gallery-footer';
-            const summary=document.createElement('span');summary.textContent=p.notes?('Pareja · '+p.notes):'Pareja activa';
+            const summary=document.createElement('span');summary.textContent=p.notes?(''+p.notes):'Sin Notas';
             const expand=document.createElement('button');expand.type='button';expand.setAttribute('aria-label','Mostrar detalles');expand.innerHTML='<i class="fas fa-chevron-right"></i>';
             footer.append(summary,expand);
             const info=document.createElement('div');info.className='pair-gallery-details';info.hidden=true;
@@ -4155,8 +4155,7 @@ function cancelEdit() {
                 <div class="pigeon-profile-buttons"><button type="button" class="btn btn-update" data-profile-action="edit"><i class="fas fa-edit"></i> Editar</button><button type="button" class="btn btn-danger" data-profile-action="delete"><i class="fas fa-trash"></i> Eliminar</button></div>`;
         } else if (pigeonProfileTab === 'pedigri') {
             const path = getPedigreePath(p);
-            content.innerHTML = `<section class="pigeon-profile-panel"><h3>Árbol genealógico</h3>
-                <p class="pigeon-profile-muted">Consulta sus antepasados o abre el pedigrí completo, con las mismas fotografías, alineación y descarga PNG de siempre.</p>
+            content.innerHTML = `<section class="pigeon-profile-panel">
                 <button type="button" class="pigeon-profile-action" data-profile-action="pedigree"><i class="fas fa-sitemap"></i> Ver pedigrí completo</button></section>
                 <section class="pigeon-profile-panel"><h3>Padres</h3>${path.parents.map(x=>profileRelativeHtml(x.p,x.rel)).join('')}</section>
                 <section class="pigeon-profile-panel"><h3>Abuelos</h3>${path.grandparents.map(x=>profileRelativeHtml(x.p,x.label || x.rel)).join('')}</section>
