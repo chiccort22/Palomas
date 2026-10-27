@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <title>Palomas Pro</title>
     <!-- PWA -->
-    <meta name="theme-color" content="#2c3e50">
+    <meta name="theme-color" content="#f4f7f6">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Palomas Pro">
@@ -1029,12 +1029,107 @@ body:not(.my-pigeons-mode):not(.inflight-mode) #birdToolbar,body:not(.my-pigeons
     .pigeon-card.main-pigeon.has-pedigree-photo .pedigree-main-photo { height: 128px; margin-bottom: 7px; }
 }
 
+
+/* Editor de recorte integrado: siempre cuadrado y sin dependencias externas. */
+.pigeon-crop-modal[hidden]{display:none!important}
+.pigeon-crop-modal{position:fixed;inset:0;z-index:11000;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;padding:calc(12px + env(safe-area-inset-top,0px)) 12px calc(12px + env(safe-area-inset-bottom,0px));box-sizing:border-box;overflow-y:auto}
+.pigeon-crop-panel{width:min(100%,430px);max-height:100%;overflow-y:auto;box-sizing:border-box;padding:18px;border-radius:20px;background:var(--card,#fff);color:var(--text,#222);box-shadow:0 12px 40px #0005}
+.pigeon-crop-header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.pigeon-crop-header h2{margin:0;font-size:20px}
+.pigeon-crop-close{border:0;background:transparent;color:inherit;font-size:30px;line-height:1;width:36px;height:36px;cursor:pointer}
+.pigeon-crop-help{font-size:13px;line-height:1.4;opacity:.8;margin:10px 0 14px}
+.pigeon-crop-square{width:100%;max-width:360px;aspect-ratio:1;margin:auto;position:relative;overflow:hidden;background:#e6e6e6;border-radius:10px;touch-action:none;user-select:none;-webkit-user-select:none}
+.pigeon-crop-square canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+.pigeon-crop-square canvas:active{cursor:grabbing}
+.pigeon-crop-grid{pointer-events:none;position:absolute;inset:0;border:2px solid rgba(255,255,255,.9);box-sizing:border-box;background:linear-gradient(to right,transparent calc(33.333% - .6px),rgba(255,255,255,.85) calc(33.333% - .6px),rgba(255,255,255,.85) calc(33.333% + .6px),transparent calc(33.333% + .6px),transparent calc(66.666% - .6px),rgba(255,255,255,.85) calc(66.666% - .6px),rgba(255,255,255,.85) calc(66.666% + .6px),transparent calc(66.666% + .6px)),linear-gradient(to bottom,transparent calc(33.333% - .6px),rgba(255,255,255,.85) calc(33.333% - .6px),rgba(255,255,255,.85) calc(33.333% + .6px),transparent calc(33.333% + .6px),transparent calc(66.666% - .6px),rgba(255,255,255,.85) calc(66.666% - .6px),rgba(255,255,255,.85) calc(66.666% + .6px),transparent calc(66.666% + .6px))}
+.pigeon-crop-zoom{display:flex;align-items:center;gap:12px;margin:15px 0}
+.pigeon-crop-zoom button{width:38px;height:38px;flex:0 0 38px;border:1px solid var(--border,#ddd);border-radius:11px;background:transparent;color:inherit;cursor:pointer}
+.pigeon-crop-zoom input{flex:1;min-width:0;accent-color:var(--primary,#3979a9)}
+.pigeon-crop-actions{display:flex;gap:10px}
+.pigeon-crop-actions .btn{flex:1;width:auto;min-width:0}
+
 /* Foto ampliada en detalles, sin alterar las tarjetas de lista o cuadrícula */
 .pigeon-detail-photo-wrap{display:flex;justify-content:center;width:100%;}
 .pigeon-detail-photo{display:block;width:min(100%,340px);max-height:320px;object-fit:contain;border-radius:15px;background:var(--card);border:1px solid var(--border);cursor:zoom-in;}
 .pigeon-photo-lightbox{position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.93);display:flex;align-items:center;justify-content:center;padding:55px 12px 25px;}
 .pigeon-photo-lightbox img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;}
 .pigeon-photo-lightbox button{position:absolute;top:max(15px,env(safe-area-inset-top));right:16px;background:#ffffff26;color:white;border:0;border-radius:50%;width:44px;height:44px;font-size:27px;cursor:pointer;}
+
+/* Ficha individual: pantalla completa, sin alterar los datos ni las tarjetas. */
+.pigeon-profile-overlay[hidden]{display:none!important}
+.pigeon-profile-overlay{position:fixed;inset:0;z-index:10020;background:var(--bg);color:var(--text);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.pigeon-profile-inner{max-width:680px;margin:auto;padding:0 15px calc(35px + env(safe-area-inset-bottom,0px))}
+.pigeon-profile-top{position:sticky;top:0;z-index:2;background:var(--bg);display:flex;align-items:center;justify-content:space-between;min-height:60px;padding:calc(7px + env(safe-area-inset-top,0px)) 0 9px;gap:10px;border-bottom:1px solid var(--border)}
+.pigeon-profile-top strong{font-size:17px;flex:1;text-align:center}
+.pigeon-profile-icon{width:42px;height:42px;display:grid;place-items:center;border:1px solid var(--border);border-radius:13px;background:var(--card);color:var(--text);font-size:17px;cursor:pointer}
+.pigeon-profile-hero{margin:17px 0 16px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:17px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:9px}
+.pigeon-profile-photo{width:min(65vw,210px);height:min(65vw,210px);border-radius:15px;object-fit:cover;background:var(--bg);border:1px solid var(--border);cursor:pointer}
+.pigeon-profile-photo-placeholder{width:min(65vw,210px);height:min(65vw,210px);display:grid;place-items:center;background:var(--bg);border:1px solid var(--border);border-radius:15px;font-size:80px;color:var(--text)}
+.pigeon-profile-ring{font-size:clamp(18px,5.2vw,24px);line-height:1.3;font-weight:750;overflow-wrap:anywhere}
+.pigeon-profile-name{opacity:.8;font-size:14px}
+.pigeon-profile-tags{display:flex;justify-content:center;flex-wrap:wrap;gap:7px}
+.pigeon-profile-tag{font-size:12px;padding:6px 11px;border-radius:100px;background:var(--bg);border:1px solid var(--border)}
+.pigeon-profile-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-bottom:14px;padding:4px;border:1px solid var(--border);border-radius:14px;background:var(--card)}
+.pigeon-profile-tab{font-size:clamp(11px,3.2vw,14px);font-weight:600;padding:12px 2px;border:0;border-radius:10px;background:transparent;color:var(--text);cursor:pointer}
+.pigeon-profile-tab[aria-selected="true"]{background:var(--accent);color:#fff}
+.pigeon-profile-panel{background:var(--card);border:1px solid var(--border);border-radius:17px;padding:16px;margin-bottom:12px}
+.pigeon-profile-panel h3{font-size:16px;margin:0 0 13px;color:var(--text)}
+.pigeon-profile-field{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px}
+.pigeon-profile-field:last-child{border-bottom:0}
+.pigeon-profile-field span:first-child{opacity:.7}
+.pigeon-profile-field strong{text-align:right;font-weight:600;overflow-wrap:anywhere}
+.pigeon-profile-notes{font-size:14px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+.pigeon-profile-buttons{display:flex;gap:10px;margin-top:15px}
+.pigeon-profile-buttons button{flex:1;min-width:0;padding:12px 9px;margin:0;font-size:14px}
+.pigeon-profile-action{width:100%;padding:13px;border-radius:12px;background:var(--accent);color:#fff;border:0;font-size:14px;font-weight:700;cursor:pointer}
+.pigeon-profile-relative{width:100%;border:1px solid var(--border);border-radius:12px;padding:10px;display:flex;align-items:center;gap:12px;text-align:left;background:var(--bg);color:var(--text);margin:8px 0;cursor:pointer}
+.pigeon-profile-relative:disabled{opacity:.75;cursor:default}
+.pigeon-profile-relative img{width:48px;height:48px;object-fit:cover;border-radius:9px}
+.pigeon-profile-relative .pigeon-relative-placeholder{width:48px;height:48px;display:grid;place-items:center;background:var(--card);border-radius:9px;font-size:23px}
+/* Las miniaturas de familiares conservan siempre el mismo cuadro cuadrado,
+   tengan una foto o el icono de paloma. */
+.pigeon-profile-relative img,
+.pigeon-profile-relative .pigeon-relative-placeholder{
+    box-sizing:border-box;
+    width:48px;
+    height:48px;
+    min-width:48px;
+    max-width:48px;
+    flex:0 0 48px;
+    border-radius:9px;
+    overflow:hidden;
+}
+.pigeon-profile-relative img{display:block;object-fit:cover}
+.pigeon-profile-relative .pigeon-relative-placeholder{display:grid;place-items:center}
+.pigeon-profile-relative span{flex:1;min-width:0;overflow-wrap:anywhere}
+.pigeon-profile-relative small{display:block;opacity:.65;margin-top:3px}
+.pigeon-profile-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.pigeon-profile-metric{background:var(--card);border:1px solid var(--border);border-radius:14px;text-align:center;padding:14px 4px}
+.pigeon-profile-metric strong{font-size:22px;display:block}
+.pigeon-profile-metric span{font-size:11px;opacity:.7}
+.pigeon-profile-result{border-bottom:1px solid var(--border);padding:12px 0;font-size:14px}
+.pigeon-profile-result:last-child{border:0}
+.pigeon-profile-muted{opacity:.7;font-size:13px;line-height:1.5}
+
+
+/* Diálogos propios: misma apariencia que las fichas de Palomas Pro. */
+.app-dialog[hidden]{display:none!important}
+.app-dialog{position:fixed;inset:0;z-index:12000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(9,17,23,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.app-dialog-card{width:min(100%,390px);max-height:min(85dvh,600px);overflow-y:auto;box-sizing:border-box;border:1px solid var(--border);border-radius:20px;background:var(--card);color:var(--text);padding:22px;box-shadow:0 18px 55px rgba(0,0,0,.18)}
+.app-dialog-symbol{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;margin-bottom:14px;background:rgba(52,152,219,.12);color:var(--accent);font-size:19px}
+.app-dialog[data-kind="danger"] .app-dialog-symbol{background:rgba(231,76,60,.12);color:var(--danger)}
+.app-dialog-card h2{font-size:19px;line-height:1.3;margin:0 0 10px;font-weight:750;color:var(--text)}
+.app-dialog-card p{font-size:14px;line-height:1.55;margin:0 0 22px;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text);opacity:.85}
+.app-dialog-actions{display:flex;gap:10px}
+.app-dialog-actions button{flex:1;min-width:0;min-height:45px;border-radius:12px;border:1px solid var(--border);font-size:14px;font-weight:700;cursor:pointer}
+.app-dialog-cancel{background:var(--bg);color:var(--text)}
+.app-dialog-accept{background:var(--accent);border-color:var(--accent)!important;color:#fff}
+.app-dialog[data-kind="danger"] .app-dialog-accept{background:var(--danger);border-color:var(--danger)!important}
+.app-dialog button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+/* Eliminar: el estilo anterior no tenía una regla .btn-danger y quedaba gris. */
+.pigeon-profile-buttons .btn-danger{background:var(--danger)!important;color:#fff!important;opacity:1!important;border:0!important}
+.pigeon-profile-buttons .btn-danger:hover{filter:brightness(.94)}
+
 </style>
 
 <style>
@@ -1061,6 +1156,197 @@ body:not(.my-pigeons-mode):not(.inflight-mode) #birdToolbar,body:not(.my-pigeons
 .bird-tag-panel h3{margin:0 0 12px;font-size:19px}
 .bird-tag-option,.bird-tag-cancel{display:block;width:100%;border:0;border-bottom:1px solid var(--border);background:transparent;color:var(--text);padding:14px 8px;text-align:left;font-size:16px}
 .bird-tag-cancel{text-align:center;color:var(--accent);font-weight:700;border-bottom:0}
+
+/* Registro y edición: misma identidad visual que la ficha individual. */
+#formContainer #formTitle{display:none!important}
+body.pigeon-form-active .header{display:none}
+body.pigeon-form-active .container{box-shadow:none;overflow:visible}
+#formContainer.pigeon-form-screen{background:var(--bg);min-height:100dvh;overflow:visible;transition:none}
+.pigeon-form-inner{max-width:680px;margin:0 auto;padding:0 15px calc(35px + env(safe-area-inset-bottom,0px))}
+.pigeon-form-top{position:sticky;top:0;z-index:4;min-height:60px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(7px + env(safe-area-inset-top,0px)) 0 9px;background:var(--bg);border-bottom:1px solid var(--border)}
+.pigeon-form-top strong{font-size:17px;text-align:center;flex:1}
+.pigeon-form-top-spacer{width:42px;height:42px;flex:none}
+#formContainer .form-content{padding:0;max-height:none!important}
+#formContainer .pigeon-form-hero{margin:17px 0 14px;padding:17px;background:var(--card);border:1px solid var(--border);border-radius:20px;display:flex;flex-direction:column;align-items:center;gap:9px;text-align:center}
+.pigeon-form-photo-wrap{width:min(65vw,210px);height:min(65vw,210px);border:1px solid var(--border);border-radius:15px;overflow:hidden;background:var(--bg);display:grid;place-items:center}
+#formContainer #pigeonPhotoPreview{width:100%!important;height:100%!important;object-fit:cover;border:0!important;border-radius:0!important;grid-area:1/1}
+.pigeon-form-photo-placeholder{width:100%;height:100%;display:grid;place-items:center;font-size:80px;color:var(--text);grid-area:1/1}
+.pigeon-form-photo-placeholder[hidden],.pigeon-form-name-preview[hidden]{display:none!important}
+.pigeon-form-ring-preview{font-size:clamp(18px,5.2vw,24px);line-height:1.3;font-weight:750;overflow-wrap:anywhere}
+.pigeon-form-name-preview{opacity:.75;font-size:14px}
+.pigeon-form-photo-buttons{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:3px}
+.pigeon-form-photo-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;width:auto;margin:0;padding:9px 12px;border:1px solid var(--border);border-radius:11px;background:var(--bg);color:var(--text);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;line-height:1.3}
+#formContainer #pigeonPhotoInput{position:absolute;width:1px;height:1px;padding:0;opacity:0;overflow:hidden;clip-path:inset(50%)}
+.pigeon-form-hint{font-size:12px;line-height:1.4;color:var(--text);opacity:.65}
+.pigeon-form-card{background:var(--card);border:1px solid var(--border);border-radius:17px;padding:16px;margin:0 0 12px}
+.pigeon-form-card h3{font-size:16px;color:var(--text);margin:0 0 17px;display:flex;align-items:center;gap:9px}
+.pigeon-form-card h3 i{color:var(--accent);font-size:15px}
+.pigeon-form-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}
+#formContainer .form-group{min-width:0;margin-bottom:15px}
+#formContainer .form-group label:not(.pigeon-form-sex-choice){font-size:13px;font-weight:600;color:var(--text);margin-bottom:7px}
+#formContainer .form-group input:not([type=radio]):not([type=file]),#formContainer .form-group select,#formContainer .form-group textarea{width:100%;min-width:0;padding:12px 11px;background:var(--bg);border:1px solid var(--border);border-radius:11px;color:var(--text);font-size:16px;min-height:46px;box-sizing:border-box}
+#formContainer .form-group textarea{min-height:108px;resize:vertical}
+#formContainer .form-group input:focus,#formContainer .form-group select:focus,#formContainer .form-group textarea:focus{border-color:var(--accent);outline:2px solid color-mix(in srgb,var(--accent) 20%,transparent);outline-offset:0}
+.pigeon-required{color:var(--danger)}
+.pigeon-form-year{position:relative}
+#formContainer .pigeon-form-year input{padding-right:48px!important}
+.pigeon-form-year button{position:absolute;right:6px;top:6px;width:34px;height:34px;border:0;border-radius:9px;background:var(--card);color:var(--text);font-size:15px;cursor:pointer}
+#formContainer .pigeon-form-sex{margin:0}
+.pigeon-form-sex-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+#formContainer .pigeon-form-sex-choice{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;position:relative;padding:11px 4px;min-height:72px;border:1px solid var(--border);border-radius:12px;background:var(--bg);font-size:12px;font-weight:600;cursor:pointer;text-align:center}
+.pigeon-form-sex-choice i{font-size:20px}
+#formContainer .pigeon-form-sex-choice input[type=radio]{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+#formContainer .pigeon-form-sex-choice:has(input:checked){border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--card));box-shadow:inset 0 0 0 1px var(--accent)}
+#formContainer .pigeon-form-sex-choice:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.pigeon-form-section-description{font-size:13px;opacity:.7;margin:-6px 0 15px}
+.pigeon-form-actions{display:flex;gap:10px;margin:17px 0 0}
+#formContainer .pigeon-form-actions .btn{flex:1;min-width:0;width:auto;border-radius:12px;padding:14px 10px;font-size:15px;font-weight:700;margin:0}
+#formContainer .pigeon-form-actions #submitBtn{background:var(--accent);color:#fff}
+#formContainer .pigeon-form-actions #cancelBtn{background:var(--card);border:1px solid var(--border);color:var(--text)}
+@media(max-width:360px){.pigeon-form-fields{grid-template-columns:1fr}.pigeon-form-card{padding:14px}.pigeon-form-inner{padding-left:11px;padding-right:11px}}
+
+/* Identidad visual unificada: cabecera general y navegación lateral.
+   Conserva los mismos botones, títulos, acciones y navegación. */
+.header{
+    background:var(--bg)!important;
+    color:var(--text)!important;
+    box-shadow:none!important;
+    border-bottom:1px solid var(--border);
+    min-height:64px;
+    padding:8px 15px!important;
+    gap:10px;
+    justify-content:space-between;
+}
+.header h1{
+    flex:1;
+    min-width:0;
+    margin:0!important;
+    text-align:center;
+    font-size:17px!important;
+    font-weight:700;
+    line-height:1.25;
+    color:var(--text);
+    overflow-wrap:anywhere;
+}
+.header::after{
+    content:'';
+    display:block;
+    width:44px;
+    height:44px;
+    flex:0 0 44px;
+}
+#menuToggleBtn{
+    flex:0 0 44px;
+    width:44px;
+    height:44px;
+    display:grid;
+    place-items:center;
+    border:1px solid var(--border)!important;
+    border-radius:13px;
+    background:var(--card)!important;
+    color:var(--text)!important;
+    font-size:18px!important;
+    padding:0!important;
+    margin:0!important;
+    box-shadow:none;
+    -webkit-tap-highlight-color:transparent;
+}
+#menuToggleBtn:active{background:var(--bg)!important;transform:scale(.97)}
+#menuToggleBtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* Menú lateral en tarjetas claras, a juego con la ficha. */
+#sidebar{
+    background:var(--bg)!important;
+    color:var(--text);
+    box-shadow:3px 0 20px #00000020;
+    padding-top:calc(66px + env(safe-area-inset-top,0px));
+}
+#sidebar a{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin:4px 10px;
+    padding:13px 12px;
+    border:1px solid transparent;
+    border-radius:13px;
+    box-shadow:none;
+    font-size:15px;
+    font-weight:600;
+    color:var(--text)!important;
+    background:var(--card);
+    transition:background .15s ease,border-color .15s ease;
+}
+#sidebar a i{width:22px;text-align:center;color:var(--accent);flex:none}
+#sidebar a:hover,#sidebar a:focus-visible{
+    background:var(--card)!important;
+    border-color:var(--border);
+    color:var(--text)!important;
+}
+#sidebar .sidebar-count{
+    margin-left:auto;
+    float:none;
+    background:var(--bg);
+    color:var(--text);
+    border:1px solid var(--border);
+    font-size:12px;
+    font-weight:700;
+    min-width:28px;
+    text-align:center;
+}
+@media(max-width:420px){
+    .header{padding:8px 15px!important;min-height:64px}
+    .header h1{font-size:17px!important}
+}
+
+/* Ajustes finales de la identidad visual: controles neutros y tablas claras.
+   Mantener colores funcionales de sexo, etiquetas, alertas y eliminaciones. */
+:root {
+    --accent: #40464b;
+    --primary: #40464b;
+}
+:root.dark {
+    --accent: #c2c8ce;
+    --primary: #34383d;
+}
+/* Tablas: sin las antiguas franjas azul marino. */
+th,
+#velocityContainer th,
+#trashContainer th,
+#pigeonTableSection th {
+    background: #edf0f1 !important;
+    color: #34383d !important;
+    border-bottom: 1px solid var(--border);
+}
+:root.dark th,
+:root.dark #velocityContainer th,
+:root.dark #trashContainer th,
+:root.dark #pigeonTableSection th {
+    background: #363a3e !important;
+    color: #f0f1f2 !important;
+}
+/* Los controles seleccionados conservan contraste legible en ambos temas. */
+#velocityContainer .tabs button[aria-selected="true"],
+#velocityContainer button.primary,
+.pigeon-profile-tab[aria-selected="true"],
+#formContainer .pigeon-form-actions #submitBtn,
+.btn-primary,
+.app-dialog-accept {
+    background: #40464b !important;
+    color: #fff !important;
+}
+:root.dark #velocityContainer .tabs button[aria-selected="true"],
+:root.dark #velocityContainer button.primary,
+:root.dark .pigeon-profile-tab[aria-selected="true"],
+:root.dark #formContainer .pigeon-form-actions #submitBtn,
+:root.dark .btn-primary,
+:root.dark .app-dialog-accept {
+    background: #c2c8ce !important;
+    color: #16191b !important;
+}
+/* Mantener el rojo de acciones destructivas y el verde de confirmaciones. */
+#velocityContainer button.danger,
+.btn-delete,
+.btn-cancel {background:var(--danger)!important;color:#fff!important}
+
 </style></head>
 <body onload="checkBreederInfo()">
 
@@ -1090,118 +1376,122 @@ body:not(.my-pigeons-mode):not(.inflight-mode) #birdToolbar,body:not(.my-pigeons
             <input type="text" id="searchInput" placeholder="Buscar por Anillo, Nombre, Color o Línea...">
         </div>
         
-        <div id="formContainer" class="form-box" style="display: none;"> 
-            <h2 id="formTitle" style="display: none;"></h2> 
-
-            <div id="formContent" class="form-content">
-                <form id="pigeonForm">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div class="form-group">
-                            <label>Número de Anillo: <span style="color: red;">*</span></label>
-                            <input type="text" id="anillo" required placeholder="Ej: ES-2024-001" maxlength="50" pattern="[A-Za-z0-9\-]+" title="Solo letras, números y guiones">
-                            <span class="error-message" id="errorAnillo"></span>
-                        </div>
-                        <div class="form-group">
-                            <label>Nombre:</label>
-                            <input type="text" id="nombre" placeholder="Ej: Palomita" maxlength="50">
-                            <span class="error-message" id="errorNombre"></span>
-                        </div>
-                        <div class="form-group">
-                            <label>Año de Nacimiento:</label>
-                            <div style="position: relative; display: flex; align-items: right;">
-                                <input type="number" id="anoNacimiento" placeholder="Ej: 2020" min="1950" max="3000" maxlength="4" style="width:100%; padding-right: 0px;">
-                                <button type="button" id="btnCurrentYear" class="btn btn-secondary" title="Usar año en curso" style="position: absolute;right: 1px;top: 8px; padding:0; width:26px; height:26px; min-width:26px; min-height:26px; max-width:26px; max-height:26px; font-size:0.95em; display:flex; align-items:center; justify-content:center;" onclick="setCurrentYearInForm()"><i class="fas fa-calendar-day" style="font-size:14px;"></i></button>
+        <div id="formContainer" class="form-box pigeon-form-screen" style="display: none;">
+            <h2 id="formTitle" style="display: none;"></h2>
+            <div class="pigeon-form-inner">
+                <div class="pigeon-form-top">
+                    <button type="button" class="pigeon-profile-icon" onclick="cancelEdit()" aria-label="Volver a Mis Palomas"><i class="fas fa-arrow-left"></i></button>
+                    <strong id="pigeonFormModeTitle">Registrar paloma</strong>
+                    <span class="pigeon-form-top-spacer" aria-hidden="true"></span>
+                </div>
+                <div id="formContent" class="form-content">
+                    <form id="pigeonForm">
+                        <section class="pigeon-form-hero" aria-label="Fotografía de la paloma">
+                            <div class="pigeon-form-photo-wrap">
+                                <img id="pigeonPhotoPreview" alt="Fotografía de la paloma" style="display:none;">
+                                <div id="pigeonFormPhotoPlaceholder" class="pigeon-form-photo-placeholder"><i class="fas fa-dove" aria-hidden="true"></i></div>
                             </div>
-                            <span class="error-message" id="errorAno"></span>
-                        </div>
-                        <div class="form-group">
-                            <label>Código de país de la anilla:</label>
-                            <input type="text" id="codigoPais" placeholder="Ej: MX, JPN, USA" maxlength="12" autocapitalize="characters" style="text-transform:uppercase;" pattern="[A-Za-z0-9-]*" title="Letras, números o guiones">
-                        </div>
-                        <div class="form-group">
-                            <label>Color:</label>
-                            <input type="text" id="color" placeholder="Ej: Azul" maxlength="50">
-                            <span class="error-message" id="errorColor"></span>
-                        </div>
-                        
-                        <div class="form-group" style="grid-column: 1 / 3;"> 
-                            <label style="margin-bottom: 10px;">Sexo:</label>
-                            <div id="sexoInputGroup" style="display: flex; gap: 20px;">
-                                
-                                <input type="radio" id="sexoMacho" name="sexo" value="Macho" style="width: auto;">
-                                <label for="sexoMacho" style="display: inline; font-weight: normal; margin-bottom: 0;">
-                                    <i class="fas fa-mars icon-male"></i> Macho
-                                </label>
-                                
-                                <input type="radio" id="sexoHembra" name="sexo" value="Hembra" style="width: auto;">
-                                <label for="sexoHembra" style="display: inline; font-weight: normal; margin-bottom: 0;">
-                                    <i class="fas fa-venus icon-female"></i> Hembra
-                                </label>
-                                
-                                <input type="radio" id="sexoDesconocido" name="sexo" value="Desconocido" checked style="width: auto;">
-                                <label for="sexoDesconocido" style="display: inline; font-weight: normal; margin-bottom: 0;">
-                                    <i class="fas fa-genderless icon-unknown"></i> Desconocido
-                                </label>
+                            <div class="pigeon-form-ring-preview" id="pigeonFormRingSummary">Nueva paloma</div>
+                            <div class="pigeon-form-name-preview" id="pigeonFormNameSummary" hidden></div>
+                            <div class="pigeon-form-photo-buttons" id="pigeonPhotoGroup">
+                                <label class="pigeon-form-photo-btn" for="pigeonPhotoInput"><i class="fas fa-camera"></i> Elegir foto</label>
+                                <input type="file" id="pigeonPhotoInput" accept="image/jpeg,image/png,image/webp,image/*" aria-label="Seleccionar fotografía">
+                                <button type="button" id="pigeonPhotoRecrop" class="pigeon-form-photo-btn" style="display:none" onclick="recropPigeonPhoto()"><i class="fas fa-crop-alt"></i> Ajustar</button>
+                                <button type="button" id="pigeonPhotoRemove" class="pigeon-form-photo-btn" style="display:none" onclick="clearPigeonPhoto()"><i class="fas fa-trash-alt"></i> Quitar</button>
                             </div>
-                        </div>
-                        </div>
-                    
-                    <div class="form-group">
-                        <label>Línea:</label>
-                        <input type="text" id="linea" placeholder="Ej: Línea A" maxlength="100">
-                        <span class="error-message" id="errorLinea"></span>
-                    </div>
+                            <small class="pigeon-form-hint">La fotografía se guarda con la paloma y en tu copia de seguridad.</small>
+                        </section>
 
-                    <div class="form-group" id="pigeonPhotoGroup">
-                        <label for="pigeonPhotoInput">Fotografía de la paloma (opcional):</label>
-                        <input type="file" id="pigeonPhotoInput" accept="image/jpeg,image/png,image/webp,image/*">
-                        <div style="display:flex;align-items:center;gap:12px;margin-top:9px">
-                            <img id="pigeonPhotoPreview" alt="Fotografía de la paloma" style="display:none;width:78px;height:78px;object-fit:cover;border-radius:13px;border:2px solid var(--border)">
-                            <button type="button" id="pigeonPhotoRemove" class="btn btn-secondary" style="display:none;width:auto" onclick="clearPigeonPhoto()">Quitar foto</button>
-                        </div>
-                        <small style="color:var(--text);opacity:.7">Se guarda con los datos de la paloma y se incluye en la copia de seguridad.</small>
-                    </div>
-                    <div class="form-group">
-                        <label>Etiqueta:</label>
-                        <select id="etiqueta">
-                            <option value="">Ninguna</option>
-                            <option value="En Vuelo">En Vuelo (Activa)</option>
-                            <option value="Perdida">Perdida</option>
-                            <option value="Vendida">Vendida</option>
-                            <option value="Fallecida">Fallecida</option>
-                        </select>
-                    </div>
+                        <section class="pigeon-form-card">
+                            <h3><i class="fas fa-id-card" aria-hidden="true"></i> Información general</h3>
+                            <div class="pigeon-form-fields">
+                                <div class="form-group">
+                                    <label for="anillo">Número de anilla <span class="pigeon-required">*</span></label>
+                                    <input type="text" id="anillo" required placeholder="Ej. 239990" maxlength="50" pattern="[A-Za-z0-9\-]+" title="Solo letras, números y guiones">
+                                    <span class="error-message" id="errorAnillo"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="codigoPais">Código de país</label>
+                                    <input type="text" id="codigoPais" placeholder="Ej. MX" maxlength="12" autocapitalize="characters" style="text-transform:uppercase;" pattern="[A-Za-z0-9-]*" title="Letras, números o guiones">
+                                </div>
+                                <div class="form-group">
+                                    <label for="anoNacimiento">Año de nacimiento</label>
+                                    <div class="pigeon-form-year">
+                                        <input type="number" id="anoNacimiento" placeholder="Ej. 2026" min="1950" max="3000" maxlength="4">
+                                        <button type="button" id="btnCurrentYear" title="Usar año en curso" aria-label="Usar año en curso" onclick="setCurrentYearInForm()"><i class="fas fa-calendar-day"></i></button>
+                                    </div>
+                                    <span class="error-message" id="errorAno"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="nombre">Nombre</label>
+                                    <input type="text" id="nombre" placeholder="Opcional" maxlength="50">
+                                    <span class="error-message" id="errorNombre"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="color">Color</label>
+                                    <input type="text" id="color" placeholder="Ej. Azul, Pinto" maxlength="50">
+                                    <span class="error-message" id="errorColor"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="linea">Línea</label>
+                                    <input type="text" id="linea" placeholder="Ej. Línea A" maxlength="100">
+                                    <span class="error-message" id="errorLinea"></span>
+                                </div>
+                            </div>
+                            <div class="form-group pigeon-form-sex">
+                                <label>Sexo</label>
+                                <div id="sexoInputGroup" class="pigeon-form-sex-options">
+                                    <label class="pigeon-form-sex-choice" for="sexoMacho"><input type="radio" id="sexoMacho" name="sexo" value="Macho"><i class="fas fa-mars icon-male"></i><span>Macho</span></label>
+                                    <label class="pigeon-form-sex-choice" for="sexoHembra"><input type="radio" id="sexoHembra" name="sexo" value="Hembra"><i class="fas fa-venus icon-female"></i><span>Hembra</span></label>
+                                    <label class="pigeon-form-sex-choice" for="sexoDesconocido"><input type="radio" id="sexoDesconocido" name="sexo" value="Desconocido" checked><i class="fas fa-genderless icon-unknown"></i><span>Sin definir</span></label>
+                                </div>
+                            </div>
+                        </section>
 
-                    <div class="form-group">
-                        <label>Notas:</label>
-                        <textarea id="resultados" rows="3" placeholder="Resultados, observaciones..." maxlength="500"></textarea>
-                        <small style="color: #888;">Máximo 500 caracteres</small>
-                    </div>
-                    
-                    <hr>
-                    <p style="font-size: 0.9em; color: var(--text);">Padres:</p>
-                    <!-- La pareja se aplica sólo mediante el botón "Usar en Registro" -->
-                    <div style="margin-bottom:8px;">
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div class="form-group">
-                            <label>Padre:</label>
-                            <select id="padreSelect"><option value="">Ninguno</option></select>
-                            <input type="text" id="padreManualInput" placeholder="Anillo/Nombre del padre (manual)" style="display:none; margin-top:8px;">
-                        </div>
-                        <div class="form-group">
-                            <label>Madre:</label>
-                            <select id="madreSelect"><option value="">Ninguna</option></select>
-                            <input type="text" id="madreManualInput" placeholder="Anillo/Nombre de la madre (manual)" style="display:none; margin-top:8px;">
-                        </div>
-                    </div>
+                        <section class="pigeon-form-card">
+                            <h3><i class="fas fa-tag" aria-hidden="true"></i> Estado y notas</h3>
+                            <div class="form-group">
+                                <label for="etiqueta">Etiqueta</label>
+                                <select id="etiqueta">
+                                    <option value="">Ninguna</option>
+                                    <option value="En Vuelo">En Vuelo (Activa)</option>
+                                    <option value="Perdida">Perdida</option>
+                                    <option value="Vendida">Vendida</option>
+                                    <option value="Fallecida">Fallecida</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="resultados">Notas y observaciones</label>
+                                <textarea id="resultados" rows="4" maxlength="500" placeholder="Anota aquí cualquier información importante..."></textarea>
+                                <small class="pigeon-form-hint">Máximo 500 caracteres</small>
+                            </div>
+                        </section>
 
-                    <button type="submit" id="submitBtn" class="btn btn-primary">Registrar Paloma</button>
-                    <button type="button" id="cancelBtn" class="btn btn-cancel" style="display: none;" onclick="cancelEdit()">Cancelar</button>
-                </form>
+                        <section class="pigeon-form-card">
+                            <h3><i class="fas fa-sitemap" aria-hidden="true"></i> Padres</h3>
+                            <p class="pigeon-form-section-description">Relaciona esta paloma con sus padres para construir su pedigrí.</p>
+                            <div class="pigeon-form-fields">
+                                <div class="form-group">
+                                    <label for="padreSelect">Padre</label>
+                                    <select id="padreSelect"><option value="">Ninguno</option></select>
+                                    <input type="text" id="padreManualInput" placeholder="Anilla o nombre del padre" style="display:none; margin-top:8px;">
+                                </div>
+                                <div class="form-group">
+                                    <label for="madreSelect">Madre</label>
+                                    <select id="madreSelect"><option value="">Ninguna</option></select>
+                                    <input type="text" id="madreManualInput" placeholder="Anilla o nombre de la madre" style="display:none; margin-top:8px;">
+                                </div>
+                            </div>
+                        </section>
+                        <div class="pigeon-form-actions">
+                            <button type="submit" id="submitBtn" class="btn btn-primary"><i class="fas fa-check" aria-hidden="true"></i> Registrar Paloma</button>
+                            <button type="button" id="cancelBtn" class="btn btn-cancel" style="display: none;" onclick="cancelEdit()">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
-        
+
         <div id="dataOptionsContainer" style="display: none;">
             <div class="data-links-group">
                 <span onclick="exportData(); closeNav();" class="data-link" title="Guardar todos los datos como un archivo JSON.">
@@ -1376,7 +1666,7 @@ body:not(.my-pigeons-mode):not(.inflight-mode) #birdToolbar,body:not(.my-pigeons
         <div id="pedigreeViewSection" style="display: none;">
             
             <div class="pedigree-buttons-bar">
-                <button type="button" id="downloadPedigreeBtn" onclick="downloadPedigreeImage()" class="btn btn-download">📸 Descargar Pedigrí como Imagen</button>
+                <button type="button" id="downloadPedigreeBtn" onclick="downloadPedigreeImage()" class="btn btn-download"><i class="fas fa-camera" aria-hidden="true"></i> Descargar Pedigrí como Imagen</button>
             </div>
             
             <div id="pedigreePreviewViewport" aria-label="Vista previa del pedigrí igual a la imagen descargada"></div>
@@ -1425,6 +1715,64 @@ body:not(.my-pigeons-mode):not(.inflight-mode) #birdToolbar,body:not(.my-pigeons
     </div>
 </div>
 
+
+
+<!-- Confirmaciones y avisos integrados; no se utilizan alert/confirm del navegador. -->
+<div id="appDialog" class="app-dialog" role="dialog" aria-modal="true" aria-labelledby="appDialogTitle" aria-describedby="appDialogMessage" hidden>
+  <div class="app-dialog-card">
+    <div class="app-dialog-symbol" aria-hidden="true"><i id="appDialogIcon" class="fas fa-circle-question"></i></div>
+    <h2 id="appDialogTitle">Confirmar acción</h2>
+    <p id="appDialogMessage"></p>
+    <div class="app-dialog-actions">
+      <button type="button" id="appDialogCancel" class="app-dialog-cancel">Cancelar</button>
+      <button type="button" id="appDialogAccept" class="app-dialog-accept">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ficha individual: se superpone a la lista y no modifica los registros. -->
+<div id="pigeonProfileOverlay" class="pigeon-profile-overlay" role="dialog" aria-modal="true" aria-label="Ficha individual de la paloma" hidden>
+    <div class="pigeon-profile-inner">
+        <div class="pigeon-profile-top">
+            <button type="button" class="pigeon-profile-icon" id="pigeonProfileBack" aria-label="Volver a la lista"><i class="fas fa-arrow-left"></i></button>
+            <strong>Ficha de paloma</strong>
+            <button type="button" class="pigeon-profile-icon" id="pigeonProfileEdit" aria-label="Editar paloma"><i class="fas fa-pen"></i></button>
+        </div>
+        <div id="pigeonProfileHero"></div>
+        <div class="pigeon-profile-tabs" role="tablist" aria-label="Información de la paloma">
+            <button type="button" class="pigeon-profile-tab" data-profile-tab="datos" role="tab">Datos</button>
+            <button type="button" class="pigeon-profile-tab" data-profile-tab="pedigri" role="tab">Pedigrí</button>
+            <button type="button" class="pigeon-profile-tab" data-profile-tab="resultados" role="tab">Resultados</button>
+            <button type="button" class="pigeon-profile-tab" data-profile-tab="crias" role="tab">Crías</button>
+        </div>
+        <div id="pigeonProfileContent" role="tabpanel"></div>
+    </div>
+</div>
+
+<!-- Editor de fotografía: la cuadrícula es una guía visual, no forma parte del archivo guardado. -->
+<div id="pigeonCropModal" class="pigeon-crop-modal" role="dialog" aria-modal="true" aria-labelledby="pigeonCropTitle" hidden>
+    <div class="pigeon-crop-panel">
+        <div class="pigeon-crop-header">
+            <h2 id="pigeonCropTitle">Ajustar fotografía</h2>
+            <button type="button" class="pigeon-crop-close" id="pigeonCropClose" aria-label="Cancelar recorte">&times;</button>
+        </div>
+        <p class="pigeon-crop-help">Mueve la foto con un dedo. Usa dos dedos o el control para acercar y alinea la paloma con la cuadrícula.</p>
+        <div class="pigeon-crop-square" id="pigeonCropSquare">
+            <canvas id="pigeonCropCanvas" width="600" height="600" aria-label="Área de recorte cuadrada de la fotografía"></canvas>
+            <div class="pigeon-crop-grid" aria-hidden="true"></div>
+        </div>
+        <div class="pigeon-crop-zoom">
+            <button type="button" id="pigeonCropZoomOut" aria-label="Alejar fotografía"><i class="fas fa-minus"></i></button>
+            <input type="range" id="pigeonCropZoom" min="1" max="4" step="0.01" value="1" aria-label="Ampliación de fotografía">
+            <button type="button" id="pigeonCropZoomIn" aria-label="Acercar fotografía"><i class="fas fa-plus"></i></button>
+        </div>
+        <div class="pigeon-crop-actions">
+            <button type="button" id="pigeonCropCancel" class="btn btn-secondary">Cancelar</button>
+            <button type="button" id="pigeonCropSave" class="btn btn-primary"><i class="fas fa-check" aria-hidden="true"></i> Guardar foto</button>
+        </div>
+    </div>
+</div>
+
 <!-- FAB Buscar Paloma -->
 <button id="fabSearch" onclick="toggleSearch()" title="Buscar">
     <i class="fas fa-search"></i>
@@ -1443,38 +1791,260 @@ body:not(.my-pigeons-mode):not(.inflight-mode) #birdToolbar,body:not(.my-pigeons
     let pigeons = JSON.parse(localStorage.getItem('misPalomas')) || [];
     let breederInfo = JSON.parse(localStorage.getItem('breederInfo')) || {};
     let pigeonPhotoValue = '';
+    function updatePigeonFormHero() {
+        const summary = document.getElementById('pigeonFormRingSummary');
+        if (!summary) return;
+        const ring = (document.getElementById('anillo')?.value || '').trim();
+        const country = (document.getElementById('codigoPais')?.value || '').trim().toUpperCase();
+        const year = (document.getElementById('anoNacimiento')?.value || '').trim();
+        summary.textContent = [ring,country,year].filter(Boolean).join('-') || 'Nueva paloma';
+        const name = document.getElementById('nombre')?.value.trim() || '';
+        const nameEl = document.getElementById('pigeonFormNameSummary');
+        if (nameEl) { nameEl.textContent = name; nameEl.hidden = !name; }
+        const placeholder = document.getElementById('pigeonFormPhotoPlaceholder');
+        if (placeholder) placeholder.hidden = !!pigeonPhotoValue;
+        const mode = document.getElementById('pigeonFormModeTitle');
+        if (mode) mode.textContent = isEditing ? 'Editar paloma' : 'Registrar paloma';
+    }
     function updatePigeonPhotoPreview() {
-        const preview=document.getElementById('pigeonPhotoPreview');
-        const remove=document.getElementById('pigeonPhotoRemove');
-        preview.style.display=pigeonPhotoValue?'block':'none';
-        remove.style.display=pigeonPhotoValue?'inline-block':'none';
-        if(pigeonPhotoValue) preview.src=pigeonPhotoValue; else preview.removeAttribute('src');
+        const preview = document.getElementById('pigeonPhotoPreview');
+        const remove = document.getElementById('pigeonPhotoRemove');
+        const recrop = document.getElementById('pigeonPhotoRecrop');
+        const hasPhoto = !!pigeonPhotoValue;
+        preview.style.display = hasPhoto ? 'block' : 'none';
+        remove.style.display = hasPhoto ? 'inline-block' : 'none';
+        recrop.style.display = hasPhoto ? 'inline-block' : 'none';
+        if (hasPhoto) preview.src = pigeonPhotoValue;
+        else preview.removeAttribute('src');
+        updatePigeonFormHero();
     }
     function clearPigeonPhoto() {
-        pigeonPhotoValue='';
-        document.getElementById('pigeonPhotoInput').value='';
+        pigeonPhotoValue = '';
+        document.getElementById('pigeonPhotoInput').value = '';
         updatePigeonPhotoPreview();
     }
-    document.getElementById('pigeonPhotoInput').addEventListener('change', async function() {
-        const file=this.files && this.files[0];
-        if(!file)return;
-        if(!file.type.startsWith('image/')){showToast('Selecciona una imagen válida','error');this.value='';return;}
-        try {
-            const url=URL.createObjectURL(file);
-            const img=new Image();
+
+    // El editor solo actualiza pigeonPhotoValue al pulsar Guardar foto.
+    // Cancelar mantiene intacta la fotografía anterior.
+    const pigeonCrop = (() => {
+        const modal = document.getElementById('pigeonCropModal');
+        const square = document.getElementById('pigeonCropSquare');
+        const canvas = document.getElementById('pigeonCropCanvas');
+        const ctx = canvas.getContext('2d');
+        const slider = document.getElementById('pigeonCropZoom');
+        const pointers = new Map();
+        const SIZE = 600;
+        let img = null;
+        let sourceUrl = null;
+        let zoom = 1;
+        let offsetX = 0, offsetY = 0;
+        let oldOverflow = '';
+        let opening = 0;
+        let lastFocused = null;
+
+        function clamp() {
+            if (!img) return;
+            const base = Math.max(SIZE / img.naturalWidth, SIZE / img.naturalHeight);
+            const w = img.naturalWidth * base * zoom;
+            const h = img.naturalHeight * base * zoom;
+            offsetX = Math.max(-((w - SIZE) / 2), Math.min((w - SIZE) / 2, offsetX));
+            offsetY = Math.max(-((h - SIZE) / 2), Math.min((h - SIZE) / 2, offsetY));
+        }
+        function draw() {
+            if (!img) return;
+            clamp();
+            const base = Math.max(SIZE / img.naturalWidth, SIZE / img.naturalHeight);
+            const w = img.naturalWidth * base * zoom;
+            const h = img.naturalHeight * base * zoom;
+            ctx.clearRect(0, 0, SIZE, SIZE);
+            ctx.drawImage(img, (SIZE - w) / 2 + offsetX, (SIZE - h) / 2 + offsetY, w, h);
+        }
+        function setZoom(next, cx = SIZE / 2, cy = SIZE / 2) {
+            const z = Math.max(1, Math.min(4, Number(next) || 1));
+            const ratio = z / zoom;
+            offsetX = (offsetX + SIZE / 2 - cx) * ratio - SIZE / 2 + cx;
+            offsetY = (offsetY + SIZE / 2 - cy) * ratio - SIZE / 2 + cy;
+            zoom = z;
+            slider.value = String(zoom);
+            draw();
+        }
+        function close() {
+            ++opening; // Invalida cargas que todavía estén pendientes.
+            modal.hidden = true;
+            document.body.style.overflow = oldOverflow;
+            pointers.clear();
+            img = null;
+            if (sourceUrl) URL.revokeObjectURL(sourceUrl);
+            sourceUrl = null;
+            if (lastFocused && lastFocused.isConnected) lastFocused.focus();
+        }
+        async function open(source) {
+            if (!source) return;
+            const ticket = ++opening;
+            lastFocused = document.activeElement;
+            // Si ya hay una edición abierta, liberar la URL anterior.
+            if (sourceUrl) URL.revokeObjectURL(sourceUrl);
+            sourceUrl = null;
+            pointers.clear();
+            img = null;
+            const photo = new Image();
             try {
-                await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;img.src=url;});
-                const scale=Math.min(1,480/Math.max(img.naturalWidth,img.naturalHeight));
-                const canvas=document.createElement('canvas');
-                canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));
-                canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));
-                canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
-                pigeonPhotoValue=canvas.toDataURL('image/jpeg',.76);
+                if (source instanceof File) {
+                    sourceUrl = URL.createObjectURL(source);
+                    photo.src = sourceUrl;
+                } else {
+                    photo.src = source;
+                }
+                await new Promise((resolve, reject) => {
+                    if (photo.complete) { photo.naturalWidth ? resolve() : reject(new Error('Imagen inválida')); return; }
+                    photo.onload = resolve;
+                    photo.onerror = reject;
+                });
+                if (ticket !== opening) return;
+                if (!photo.naturalWidth || !photo.naturalHeight) throw new Error('Imagen vacía');
+                img = photo;
+                zoom = 1;
+                offsetX = 0;
+                offsetY = 0;
+                slider.value = '1';
+                oldOverflow = document.body.style.overflow;
+                document.body.style.overflow = 'hidden';
+                modal.hidden = false;
+                draw();
+                document.getElementById('pigeonCropSave').focus();
+            } catch (e) {
+                if (ticket === opening) {
+                    if (sourceUrl) URL.revokeObjectURL(sourceUrl);
+                    sourceUrl = null;
+                    showToast('No se pudo abrir la fotografía', 'error');
+                }
+            }
+        }
+        function point(e) {
+            const rect = square.getBoundingClientRect();
+            return { x: (e.clientX - rect.left) * SIZE / rect.width,
+                     y: (e.clientY - rect.top) * SIZE / rect.height };
+        }
+        square.addEventListener('pointerdown', e => {
+            if (!img) return;
+            e.preventDefault();
+            square.setPointerCapture(e.pointerId);
+            pointers.set(e.pointerId, point(e));
+        });
+        square.addEventListener('pointermove', e => {
+            if (!img || !pointers.has(e.pointerId)) return;
+            e.preventDefault();
+            const before = [...pointers.values()];
+            const now = point(e);
+            pointers.set(e.pointerId, now);
+            const after = [...pointers.values()];
+            if (before.length >= 2) {
+                const a = before[0], b = before[1], c = after[0], d = after[1];
+                const oldDist = Math.hypot(a.x - b.x, a.y - b.y);
+                const newDist = Math.hypot(c.x - d.x, c.y - d.y);
+                const oldCenter = {x:(a.x+b.x)/2,y:(a.y+b.y)/2};
+                const newCenter = {x:(c.x+d.x)/2,y:(c.y+d.y)/2};
+                offsetX += newCenter.x - oldCenter.x;
+                offsetY += newCenter.y - oldCenter.y;
+                if (oldDist > 0) setZoom(zoom * newDist / oldDist, newCenter.x, newCenter.y);
+                else draw();
+            } else {
+                offsetX += now.x - before[0].x;
+                offsetY += now.y - before[0].y;
+                draw();
+            }
+        });
+        const endPointer = e => { pointers.delete(e.pointerId); };
+        square.addEventListener('pointerup', endPointer);
+        square.addEventListener('pointercancel', endPointer);
+        square.addEventListener('lostpointercapture', endPointer);
+        slider.addEventListener('input', () => setZoom(slider.value));
+        document.getElementById('pigeonCropZoomOut').addEventListener('click', () => setZoom(zoom - .2));
+        document.getElementById('pigeonCropZoomIn').addEventListener('click', () => setZoom(zoom + .2));
+        document.getElementById('pigeonCropCancel').addEventListener('click', close);
+        document.getElementById('pigeonCropClose').addEventListener('click', close);
+        modal.addEventListener('click', e => { if (e.target === modal) close(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) close(); });
+        document.getElementById('pigeonCropSave').addEventListener('click', () => {
+            if (!img) return;
+            try {
+                // La cuadrícula es una capa HTML: nunca se dibuja en el JPG guardado.
+                draw();
+                const result = canvas.toDataURL('image/jpeg', .82);
+                pigeonPhotoValue = result;
                 updatePigeonPhotoPreview();
-            } finally {URL.revokeObjectURL(url);}
-        } catch(err) {showToast('No se pudo procesar la fotografía','error');}
-        this.value='';
+                close();
+            } catch (e) { showToast('No se pudo guardar el recorte', 'error'); }
+        });
+        return {open, close};
+    })();
+    function recropPigeonPhoto() {
+        if (pigeonPhotoValue) pigeonCrop.open(pigeonPhotoValue);
+    }
+    document.getElementById('pigeonPhotoInput').addEventListener('change', function() {
+        const file = this.files && this.files[0];
+        this.value = '';
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            showToast('Selecciona una imagen válida', 'error');
+            return;
+        }
+        pigeonCrop.open(file);
     });
+
+// Cuadro de confirmación/aviso propio de Palomas Pro, compatible con PWA y navegador.
+const appDialogManager = (() => {
+    const el = document.getElementById('appDialog');
+    const title = document.getElementById('appDialogTitle');
+    const message = document.getElementById('appDialogMessage');
+    const icon = document.getElementById('appDialogIcon');
+    const cancel = document.getElementById('appDialogCancel');
+    const accept = document.getElementById('appDialogAccept');
+    const queue = [];
+    let current = null;
+    let previousFocus = null;
+    function next() {
+        if (current || !queue.length) return;
+        current = queue.shift();
+        previousFocus = document.activeElement;
+        const {text, opts} = current;
+        const danger = opts.danger ?? /eliminar|vaciar|borrar|papelera|reemplazar/i.test(text);
+        el.dataset.kind = danger ? 'danger' : 'normal';
+        title.textContent = opts.title || (opts.notice ? 'Aviso' : danger ? 'Confirmar eliminación' : 'Confirmar acción');
+        message.textContent = text;
+        icon.className = 'fas ' + (opts.notice ? 'fa-circle-info' : danger ? 'fa-triangle-exclamation' : 'fa-circle-question');
+        cancel.hidden = !!opts.notice;
+        accept.textContent = opts.acceptText || (opts.notice ? 'Entendido' : danger ? 'Eliminar' : 'Confirmar');
+        el.hidden = false;
+        (opts.notice ? accept : cancel).focus();
+    }
+    function finish(value) {
+        if (!current) return;
+        const item = current;
+        current = null;
+        el.hidden = true;
+        if (previousFocus?.isConnected && typeof previousFocus.focus === 'function') previousFocus.focus();
+        item.resolve(value);
+        next();
+    }
+    accept.addEventListener('click', () => finish(true));
+    cancel.addEventListener('click', () => finish(false));
+    el.addEventListener('click', e => { if (e.target === el) finish(false); });
+    document.addEventListener('keydown', e => {
+        if (el.hidden) return;
+        if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); finish(false); }
+        if (e.key === 'Tab') {
+            const first = cancel.hidden ? accept : cancel;
+            const last = accept;
+            if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+            else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+    }, true);
+    return (text, opts = {}) => new Promise(resolve => { queue.push({text:String(text), opts, resolve}); next(); });
+})();
+function appConfirm(message, opts) { return appDialogManager(message, opts); }
+function appAlert(message, opts = {}) { return appDialogManager(message, {...opts, notice:true}); }
+
     let isEditing = false; 
     let currentClickMode = 'details'; 
     let openDetailAnillo = null; 
@@ -1503,6 +2073,9 @@ body:not(.my-pigeons-mode):not(.inflight-mode) #birdToolbar,body:not(.my-pigeons
     }
 
     const formContent = document.getElementById('formContent');
+    ['anillo','codigoPais','anoNacimiento','nombre'].forEach(id => {
+        document.getElementById(id).addEventListener('input', updatePigeonFormHero);
+    });
 
     // --- Preferencia: Formato de año (4 dígitos o 2 dígitos) ---
     let yearFormat = localStorage.getItem('yearFormat') || '4';
@@ -1649,8 +2222,8 @@ body:not(.my-pigeons-mode):not(.inflight-mode) #birdToolbar,body:not(.my-pigeons
         }
     }
 
-    function permanentlyDeleteFromTrash(anillo) {
-        if (!confirm('¿Eliminar permanentemente esta paloma? Esta acción no se puede deshacer.')) return;
+    async function permanentlyDeleteFromTrash(anillo) {
+        if (!await appConfirm('¿Eliminar permanentemente esta paloma? Esta acción no se puede deshacer.')) return;
         trash = trash.filter(t => t.anillo !== anillo);
         saveTrash(); renderTrash();
         showToast('Paloma eliminada permanentemente', 'success');
@@ -1666,18 +2239,8 @@ body:not(.my-pigeons-mode):not(.inflight-mode) #birdToolbar,body:not(.my-pigeons
             showToast('Papelera vaciada', 'success');
         };
 
-        // Callback para el bridge nativo
-        window.handleEmptyTrashConfirm = function(confirmed) {
-            if (confirmed) proceed();
-            try { delete window.handleEmptyTrashConfirm; } catch (e) {}
-        };
-
-        const msg = '¿Vaciar la papelera? Esta acción eliminará permanentemente todas las entradas.';
-        if (window.Android && window.Android.showConfirmDialog) {
-            window.Android.showConfirmDialog(msg, 'handleEmptyTrashConfirm');
-        } else {
-            if (confirm(msg)) proceed();
-        }
+        appConfirm('¿Vaciar la papelera? Esta acción eliminará permanentemente todas las entradas.',
+            {danger:true, title:'Vaciar papelera', acceptText:'Vaciar'}).then(ok => { if (ok) proceed(); });
     }
 
     // Purgar automáticamente palomas que llevan más de 30 días en la papelera
@@ -1900,8 +2463,8 @@ body:not(.my-pigeons-mode):not(.inflight-mode) #birdToolbar,body:not(.my-pigeons
 
     // function setActivePair removed per user request; use useActivePairInRegister instead
 
-    function deleteActivePair(id) {
-        if (!confirm('Eliminar pareja?')) return;
+    async function deleteActivePair(id) {
+        if (!await appConfirm('¿Eliminar esta pareja?', {danger:true})) return;
         const idx = activePairs.findIndex(p => p.id === id);
         if (idx === -1) return;
         const pair = activePairs[idx];
@@ -2544,6 +3107,7 @@ if (window.Android) {
         closeFlightActions();
         // Registrar la vista actual para que el FAB pueda comportarse según el contexto
         currentView = viewName;
+        document.body.classList.toggle('pigeon-form-active', viewName === 'register');
         // Ocultar todas las vistas
         formContainer.style.display = 'none';
         pigeonTableSection.style.display = 'none';
@@ -2722,6 +3286,7 @@ function openRegisterForm() {
     // Limpieza por seguridad
     form.reset();
     clearPigeonPhoto();
+    updatePigeonFormHero();
     document.getElementById('sexoDesconocido').checked = true;
     anilloInput.disabled = false;
     delete anilloInput.dataset.originalAnillo;
@@ -3181,23 +3746,8 @@ async function exportData() {
         window._tempFileToImport = file;
         window._tempEventTarget = event.target;
 
-        if (window.Android && window.Android.showConfirmDialog) {
-            // Llama a una función nativa de Android para mostrar el diálogo de confirmación.
-            window.Android.showConfirmDialog(
-                "Confirmar Restauración", // Título
-                confirmMsg, 
-                "confirmImportAction(true)", // Callback al confirmar
-                "confirmImportAction(false)" // Callback al cancelar
-            );
-            
-        } else {
-            // Fallback para navegadores web estándar (flujo síncrono)
-            if (confirm(confirmMsg)) {
-                processFileContent(file, event.target);
-            } else {
-                event.target.value = '';
-            }
-        }
+        appConfirm(confirmMsg, {danger:true, title:'Restaurar copia de seguridad', acceptText:'Restaurar'})
+            .then(ok => confirmImportAction(ok));
     }
     
     // Función de callback global que el código nativo de Android debe llamar.
@@ -3273,20 +3823,12 @@ async function exportData() {
                 
                 const successMsg = `Datos restaurados con éxito. Se cargaron ${pigeons.length} palomas. y ${activePairs.length} parejas activas.`;
                 
-                if (window.Android) {
-                    window.Android.showToast(successMsg);
-                } else {
-                    alert(successMsg);
-                }
+                showToast(successMsg, 'success');
                 showPigeonTable();
 
             } catch (error) {
                 const errorMsg = `Error al procesar el archivo: ${error.message}`;
-                if (window.Android) {
-                    window.Android.showToast(errorMsg);
-                } else {
-                    alert(errorMsg);
-                }
+                appAlert(errorMsg, {title:'Error al importar'});
             }
             eTarget.value = '';
         };
@@ -3328,6 +3870,7 @@ async function exportData() {
         document.getElementById('linea').value = p.linea;
         document.getElementById('resultados').value = p.resultados || '';
         document.getElementById('etiqueta').value = p.tag || '';
+        updatePigeonFormHero();
         
         const sexValue = p.sexo || 'Desconocido';
         const radioBtn = document.querySelector(`input[name="sexo"][value="${sexValue}"]`);
@@ -3412,103 +3955,178 @@ function cancelEdit() {
         const proceedToDelete = () => {
             // Mover a la papelera (soft-delete)
             moveToTrash(anillo);
+            if (typeof pigeonProfileOverlay !== 'undefined' && !pigeonProfileOverlay.hidden && String(pigeonProfileRing) === String(anillo)) closePigeonProfile();
             if(isEditing && anilloInput.value === anillo) cancelEdit();
         };
 
-        // 2. Crea la función de callback que se llamará desde Kotlin
-        window.handleDeleteConfirm = (confirmed) => {
-            if (confirmed) {
-                proceedToDelete();
-            }
-            delete window.handleDeleteConfirm; // Limpia la función global para no dejar basura
-        };
-
         const message = '¿Mover la paloma ' + anillo + ' a la papelera? Podrás restaurarla desde la Papelera.';
-        
-        // 3. Llama al diálogo nativo si existe, si no, usa el confirm() de JavaScript
-        if (window.Android && window.Android.showConfirmDialog) {
-            window.Android.showConfirmDialog(message, 'handleDeleteConfirm');
-        } else {
-            // Fallback para el navegador de escritorio
-            if (confirm(message)) {
-                proceedToDelete();
-            }
-        }
+        appConfirm(message, {danger:true, title:'Mover a la papelera', acceptText:'Mover a papelera'})
+            .then(ok => { if (ok) proceedToDelete(); });
     }
     
     // --- LÓGICA DE DETALLES DE FILA (MEJORADA) ---
 
-    function toggleDetails(anillo) {
-        const currentRow = document.querySelector(`tr[data-anillo="${anillo}"]`);
-        const swipeRow = Array.from(document.querySelectorAll('#flightSwipeList .flight-item')).find(el => el.dataset.anillo === anillo);
-        if (!currentRow && !swipeRow) return;
 
-        const isCurrentlyOpen = openDetailAnillo === anillo;
-        const existingDetailRow = document.getElementById('details-row-' + openDetailAnillo);
-        
-        // 1. Cerrar cualquier fila de detalle abierta (si existe)
-        if (existingDetailRow) {
-            existingDetailRow.remove();
-            // Mostrar FAB al cerrar la fila de detalles
-            document.body.classList.remove('hide-fab');
+    // Ficha individual: consulta los mismos datos ya guardados, sin duplicarlos.
+    let pigeonProfileRing = null;
+    let pigeonProfileTab = 'datos';
+    let pigeonProfileOrigin = 'table';
+    let pigeonProfileListScroll = 0;
+    const pigeonProfileOverlay = document.getElementById('pigeonProfileOverlay');
+    const profileEscape = value => escapeHtml(value == null ? '' : String(value)).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    const profilePhotoOk = src => typeof src === 'string' && /^data:image\/(?:jpeg|png|webp);base64,/.test(src);
+    const profileRingText = p => [p.anillo, p.codigoPais, p.anoNacimiento].filter(v => v !== undefined && v !== null && String(v).trim() !== '').join('-');
+
+    function openPigeonProfile(anillo, tab = 'datos', fromPedigree = false) {
+        const p = pigeons.find(b => String(b.anillo) === String(anillo));
+        if (!p) { showToast('No se encontró la paloma.', 'error'); return; }
+        if (!fromPedigree && pigeonProfileOverlay.hidden) {
+            pigeonProfileOrigin = currentView === 'inflight' ? 'inflight' : 'table';
+            pigeonProfileListScroll = window.scrollY;
         }
-        
-        // 2. Si la fila clicada ya estaba abierta, solo cerramos.
-        if (isCurrentlyOpen) {
-            openDetailAnillo = null;
-            return;
-        }
-
-        // 3. Abrir la nueva fila de detalles
-        const p = pigeons.find(item => item.anillo === anillo);
-        if (!p) return;
-        
-        const detailRow = document.createElement('tr');
-        detailRow.className = 'details-row';
-        detailRow.id = 'details-row-' + anillo;
-        
-        const cell = document.createElement('td');
-        cell.colSpan = 6;
-        cell.innerHTML = buildDetailsContent(p); // Usamos la función que mejoramos antes
-        detailRow.appendChild(cell);
-
-        if (swipeRow && swipeRow.offsetParent !== null) {
-            const detailsPanel = document.createElement('div');
-            detailsPanel.id = detailRow.id;
-            detailsPanel.className = 'swipe-details-panel';
-            detailsPanel.innerHTML = buildDetailsContent(p);
-            if (document.getElementById('flightSwipeList')?.classList.contains('bird-grid')) {
-                // Insertar después de la última tarjeta de la fila visual (dos columnas).
-                const cards = Array.from(swipeRow.parentElement.children).filter(el => el.classList.contains('flight-item'));
-                const position = cards.indexOf(swipeRow);
-                const lastInRow = cards[Math.min(position + (position % 2 === 0 ? 1 : 0), cards.length - 1)];
-                lastInRow.after(detailsPanel);
-            } else {
-                swipeRow.after(detailsPanel);
-            }
-        } else {
-            currentRow.after(detailRow);
-        }
-        openDetailAnillo = anillo;
-        
-        // Ocultar FAB al abrir la fila de detalles
-        document.body.classList.add('hide-fab');
-
-        // Colocar la paloma seleccionada justo debajo del encabezado fijo.
-        // En las vistas con deslizamiento la fila es un DIV, no un TR.
-        const scrollTarget = (swipeRow && swipeRow.offsetParent !== null) ? swipeRow : currentRow;
-        if (scrollTarget) {
-            setTimeout(() => {
-                if (!scrollTarget.isConnected || openDetailAnillo !== anillo) return;
-                const header = document.querySelector('.header');
-                const headerHeight = header ? header.getBoundingClientRect().height : 0;
-                const top = scrollTarget.getBoundingClientRect().top + window.scrollY - headerHeight;
-                window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
-            }, 100);
-        }
-
+        pigeonProfileRing = p.anillo;
+        pigeonProfileTab = tab;
+        pigeonProfileOverlay.hidden = false;
+        pigeonProfileOverlay.scrollTop = 0;
+        renderPigeonProfile();
+        document.getElementById('pigeonProfileBack').focus({preventScroll:true});
     }
 
+    function closePigeonProfile() {
+        pigeonProfileOverlay.hidden = true;
+        pigeonProfileRing = null;
+    }
+
+    function profileRelativeHtml(p, label) {
+        if (!p) return `<div class="pigeon-profile-relative"><span><strong>${profileEscape(label)}</strong><small>Sin registrar</small></span></div>`;
+        const registered = pigeons.some(b => b.anillo === p.anillo);
+        const image = profilePhotoOk(p.foto)
+            ? `<img src="${p.foto}" alt="Fotografía">`
+            : '<span class="pigeon-relative-placeholder"><i class="fas fa-dove"></i></span>';
+        return `<button type="button" class="pigeon-profile-relative" ${registered ? `data-profile-ring="${profileEscape(p.anillo)}"` : 'disabled'}>
+            ${image}<span><strong>${profileEscape(p.anillo)}</strong><small>${profileEscape(label)}${p.nombre ? ' · ' + profileEscape(p.nombre) : ''}${registered ? '' : ' · No registrado'}</small></span>${registered ? '<i class="fas fa-chevron-right"></i>' : ''}</button>`;
+    }
+
+    function parsePigeonRaceResults(notes) {
+        // Registrar Resultados guarda: "1 Lugar Cro. Altamira, Zac. 299km".
+        // Las notas libres nunca se interpretan como carreras.
+        const result = [];
+        String(notes || '').split(/\r?\n/).forEach(line => {
+            const match = line.trim().match(/^(\d+)\s*(?:°|º|er|o|a)?\s+Lugar\s+(.+?)\s+(\d+(?:[.,]\d+)?)\s*km\s*$/i);
+            if (!match) return;
+            const distance = Number(match[3].replace(',', '.'));
+            if (!Number.isFinite(distance)) return;
+            result.push({place: match[2], position: Number(match[1]), distance});
+        });
+        return result;
+    }
+
+    function renderPigeonProfile() {
+        const p = pigeons.find(b => String(b.anillo) === String(pigeonProfileRing));
+        if (!p) { closePigeonProfile(); return; }
+        const hero = document.getElementById('pigeonProfileHero');
+        const content = document.getElementById('pigeonProfileContent');
+        const photo = profilePhotoOk(p.foto)
+            ? `<img class="pigeon-profile-photo" src="${p.foto}" alt="Fotografía de la paloma" title="Tocar para ampliar" data-profile-photo>`
+            : '<div class="pigeon-profile-photo-placeholder"><i class="fas fa-dove"></i></div>';
+        hero.innerHTML = `<div class="pigeon-profile-hero">${photo}
+            <div class="pigeon-profile-ring">${profileEscape(profileRingText(p))}</div>
+            ${p.nombre ? `<div class="pigeon-profile-name">${profileEscape(p.nombre)}</div>` : ''}
+            <div class="pigeon-profile-tags">
+                <span class="pigeon-profile-tag">${profileEscape(p.sexo || 'Desconocido')}</span>
+                ${p.color ? `<span class="pigeon-profile-tag">${profileEscape(p.color)}</span>` : ''}
+                ${p.tag || p.etiqueta ? `<span class="pigeon-profile-tag">${profileEscape(p.tag || p.etiqueta)}</span>` : ''}
+            </div></div>`;
+        document.querySelectorAll('.pigeon-profile-tab').forEach(button => {
+            const active = button.dataset.profileTab === pigeonProfileTab;
+            button.setAttribute('aria-selected', String(active));
+            button.tabIndex = active ? 0 : -1;
+        });
+        if (pigeonProfileTab === 'datos') {
+            const fields = [
+                ['Número de anilla',p.anillo],['Código de país',p.codigoPais],['Año',p.anoNacimiento],
+                ['Nombre',p.nombre],['Sexo',p.sexo],['Color',p.color],['Línea',p.linea],
+                ['Etiqueta',p.tag || p.etiqueta]
+            ];
+            const rows = fields.map(([label,value]) => `<div class="pigeon-profile-field"><span>${label}</span><strong>${profileEscape(value || '—')}</strong></div>`).join('');
+            const father = pigeons.find(b => b.anillo === p.padre) || (p.padre ? {anillo:p.padre} : null);
+            const mother = pigeons.find(b => b.anillo === p.madre) || (p.madre ? {anillo:p.madre} : null);
+            content.innerHTML = `<section class="pigeon-profile-panel"><h3>Información general</h3>${rows}</section>
+                <section class="pigeon-profile-panel"><h3>Padres</h3>${profileRelativeHtml(father,'Padre')}${profileRelativeHtml(mother,'Madre')}</section>
+                <section class="pigeon-profile-panel"><h3>Notas y observaciones</h3><p class="pigeon-profile-notes">${profileEscape(p.resultados || 'Sin notas registradas.')}</p></section>
+                <div class="pigeon-profile-buttons"><button type="button" class="btn btn-update" data-profile-action="edit"><i class="fas fa-edit"></i> Editar</button><button type="button" class="btn btn-danger" data-profile-action="delete"><i class="fas fa-trash"></i> Eliminar</button></div>`;
+        } else if (pigeonProfileTab === 'pedigri') {
+            const path = getPedigreePath(p);
+            content.innerHTML = `<section class="pigeon-profile-panel"><h3>Árbol genealógico</h3>
+                <p class="pigeon-profile-muted">Consulta sus antepasados o abre el pedigrí completo, con las mismas fotografías, alineación y descarga PNG de siempre.</p>
+                <button type="button" class="pigeon-profile-action" data-profile-action="pedigree"><i class="fas fa-sitemap"></i> Ver pedigrí completo</button></section>
+                <section class="pigeon-profile-panel"><h3>Padres</h3>${path.parents.map(x=>profileRelativeHtml(x.p,x.rel)).join('')}</section>
+                <section class="pigeon-profile-panel"><h3>Abuelos</h3>${path.grandparents.map(x=>profileRelativeHtml(x.p,x.label || x.rel)).join('')}</section>
+                <section class="pigeon-profile-panel"><h3>Bisabuelos</h3>${path.greatGrandparents.map(x=>profileRelativeHtml(x.p,x.label || x.rel)).join('')}</section>`;
+        } else if (pigeonProfileTab === 'resultados') {
+            const races = parsePigeonRaceResults(p.resultados);
+            const top20 = races.filter(r=>r.position >= 1 && r.position <= 20).length;
+            const maxDistance = races.length ? Math.max(...races.map(r=>r.distance)) : 0;
+            const metrics = [[races.length,'Resultados'],[top20,'Top 20'],[maxDistance ? maxDistance.toLocaleString('es-MX') : '—','Máx. km']];
+            content.innerHTML = `<div class="pigeon-profile-metrics">${metrics.map(([v,label])=>`<div class="pigeon-profile-metric"><strong>${v}</strong><span>${label}</span></div>`).join('')}</div>
+                <section class="pigeon-profile-panel"><h3>Historial de competencias</h3>
+                ${races.length ? races.map(r=>`<div class="pigeon-profile-result"><strong>${profileEscape(r.place)}</strong><div class="pigeon-profile-muted">${r.distance.toLocaleString('es-MX')} km · ${r.position}° lugar</div></div>`).join('') : '<p class="pigeon-profile-muted">Todavía no hay resultados registrados con el formato de Registrar Resultados.</p>'}
+                <p class="pigeon-profile-muted">Las estadísticas cuentan únicamente las carreras registradas con el formato automático. Las notas libres se conservan en Datos.</p></section>`;
+        } else {
+            const children = getChildren(p.anillo);
+            const grandchildren = children.flatMap(child => getChildren(child.anillo));
+            content.innerHTML = `<section class="pigeon-profile-panel"><h3>Hijos registrados (${children.length})</h3>
+                ${children.length ? children.map(child=>profileRelativeHtml(child,'Hijo/a')).join('') : '<p class="pigeon-profile-muted">No hay crías vinculadas a esta paloma todavía.</p>'}</section>
+                ${grandchildren.length ? `<section class="pigeon-profile-panel"><h3>Nietos registrados (${grandchildren.length})</h3>${grandchildren.map(child=>profileRelativeHtml(child,'Nieto/a')).join('')}</section>` : ''}
+                <p class="pigeon-profile-muted">Esta información se obtiene de las relaciones de padre y madre que ya tienes registradas.</p>`;
+        }
+    }
+
+    function openProfilePedigree() {
+        const ring = pigeonProfileRing;
+        const origin = pigeonProfileOrigin;
+        const savedScroll = pigeonProfileListScroll;
+        if (!ring) return;
+        closePigeonProfile();
+        showPedigree(ring);
+        // La flecha de la vista original del pedigrí regresa a esta ficha.
+        setHeaderBack(true, function() {
+            if (origin === 'inflight') openInFlightPigeons();
+            else showPigeonTable();
+            pigeonProfileOrigin = origin;
+            pigeonProfileListScroll = savedScroll;
+            openPigeonProfile(ring,'pedigri',true);
+        });
+    }
+
+    document.getElementById('pigeonProfileBack').addEventListener('click', closePigeonProfile);
+    document.getElementById('pigeonProfileEdit').addEventListener('click', () => {
+        const ring = pigeonProfileRing;
+        closePigeonProfile();
+        if (ring) prepareEdit(ring);
+    });
+    document.querySelectorAll('[data-profile-tab]').forEach(button => button.addEventListener('click', () => {
+        pigeonProfileTab = button.dataset.profileTab;
+        renderPigeonProfile();
+    }));
+    pigeonProfileOverlay.addEventListener('click', e => {
+        const photo = e.target.closest('[data-profile-photo]');
+        if (photo) { openPigeonDetailPhoto(photo.src); return; }
+        const relative = e.target.closest('[data-profile-ring]');
+        if (relative) { openPigeonProfile(relative.dataset.profileRing,pigeonProfileTab,true); return; }
+        const action = e.target.closest('[data-profile-action]')?.dataset.profileAction;
+        if (!action) return;
+        if (action === 'pedigree') { openProfilePedigree(); return; }
+        const ring = pigeonProfileRing;
+        if (action === 'edit') { closePigeonProfile(); prepareEdit(ring); }
+        if (action === 'delete') deletePigeon(ring);
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && !pigeonProfileOverlay.hidden && !document.getElementById('pigeonPhotoLightbox')) closePigeonProfile();
+    });
+
+    // Al tocar una tarjeta se abre la ficha completa; se conserva el resto de la lista.
+    function toggleDetails(anillo) { openPigeonProfile(anillo); }
 
     // Helper para obtener el camino del pedigrí hasta 4 generaciones
     function getPedigreePath(pigeon) {
@@ -4631,12 +5249,12 @@ $('distance').value=state.distance;
 $('distance').addEventListener('input',()=>{state.distance=$('distance').value;save();update();});$('search').addEventListener('input',filter);
 function tab(active){for(const name of ['register','ranking','weekly']){$(name).hidden=name!==active;$('tab-'+name).setAttribute('aria-selected',String(name===active));}}
 $('tab-register').onclick=()=>tab('register');$('tab-ranking').onclick=()=>tab('ranking');$('tab-weekly').onclick=()=>{drawWeekly();tab('weekly');};
-$('new').onclick=()=>{if(!confirm('¿Iniciar una nueva prueba? Se borrarán las horas actuales. Los números y la distancia se conservarán.'))return;state.currentTrainingId=null;state.birds.forEach(b=>{b.start='';b.arrival='';b.next=false;});$('search').value='';save();drawRows();tab('register');};
+$('new').onclick=async()=>{if(!await appConfirm('¿Iniciar una nueva prueba? Se borrarán las horas actuales. Los números y la distancia se conservarán.'))return;state.currentTrainingId=null;state.birds.forEach(b=>{b.start='';b.arrival='';b.next=false;});$('search').value='';save();drawRows();tab('register');};
 function weeklyOrdered(){const birds=new Map();state.trainings.forEach((t,index)=>{t.results.forEach(r=>{if(!birds.has(r.number))birds.set(r.number,{number:r.number,total:0,speeds:Array(state.trainings.length).fill(null)});const bird=birds.get(r.number);bird.speeds[index]=r.speed;bird.total+=r.speed;});});return [...birds.values()].sort((a,b)=>b.total-a.total||a.number.localeCompare(b.number,undefined,{numeric:true}));}
 function drawWeekly(){
-$('training-count').textContent=state.trainings.length+' entrenamientos';const headers=['LUGAR','PALOMA',...state.trainings.map((t,i)=>'E'+(i+1)),'PUNTUACIÓN'];const head=document.createElement('tr');headers.forEach(text=>{const th=document.createElement('th');th.textContent=text;head.append(th);});$('weekly-head').replaceChildren(head);$('weekly-results').replaceChildren();const birds=weeklyOrdered();birds.forEach((bird,i)=>{const tr=document.createElement('tr');if(i===0)tr.className='winner';[i+1,bird.number,...bird.speeds.map(v=>v===null?'—':v.toFixed(3)),bird.total.toFixed(3)].forEach(value=>{const td=document.createElement('td');td.textContent=value;tr.append(td);});tr.lastChild.className='speed';$('weekly-results').append(tr);});$('weekly-empty').hidden=birds.length>0;$('training-list').replaceChildren();state.trainings.forEach((t,i)=>{const button=document.createElement('button');button.textContent='Eliminar E'+(i+1);button.className='danger';button.onclick=()=>{if(!confirm('¿Eliminar el entrenamiento '+(i+1)+' de la clasificación semanal?'))return;const before=state.trainings;state.trainings=before.filter(item=>item.id!==t.id);if(!save()){state.trainings=before;return;}drawWeekly();update();};$('training-list').append(button);});}
-$('save-training').onclick=()=>{const results=ordered();if(!results.length){alert('Introduce una distancia válida y al menos una suelta y llegada válidas.');return;}const invalid=state.birds.filter(b=>(b.start||b.arrival)&&!results.some(r=>r.number===b.number));if(invalid.length&&!confirm('Hay '+invalid.length+' paloma(s) con horas incompletas o inválidas. Se guardarán solo las '+results.length+' con velocidad válida. ¿Continuar?'))return;const id=state.currentTrainingId||('e-'+Date.now()+'-'+Math.random().toString(36).slice(2));const entry={id,distance:state.distance,results:results.map(b=>({number:b.number,start:b.start,arrival:b.arrival,next:!!b.next,elapsed:b.elapsed,speed:b.speed}))};const index=state.trainings.findIndex(t=>t.id===id);const previous=state.trainings;const oldId=state.currentTrainingId;state.trainings=index<0?[...previous,entry]:previous.map(t=>t.id===id?entry:t);state.currentTrainingId=id;if(!save()){state.trainings=previous;state.currentTrainingId=oldId;alert('No se pudo guardar el entrenamiento en este dispositivo.');return;}drawWeekly();update();tab('weekly');};
-$('new-week').onclick=()=>{if(!state.trainings.length)return;if(!confirm('¿Vaciar la clasificación semanal para empezar una nueva semana? Se eliminarán los entrenamientos guardados de esta tabla. El registro actual y los números se conservarán.'))return;const before=state.trainings;const oldId=state.currentTrainingId;state.trainings=[];state.currentTrainingId=null;if(!save()){state.trainings=before;state.currentTrainingId=oldId;return;}drawWeekly();update();};
+$('training-count').textContent=state.trainings.length+' entrenamientos';const headers=['LUGAR','PALOMA',...state.trainings.map((t,i)=>'E'+(i+1)),'PUNTUACIÓN'];const head=document.createElement('tr');headers.forEach(text=>{const th=document.createElement('th');th.textContent=text;head.append(th);});$('weekly-head').replaceChildren(head);$('weekly-results').replaceChildren();const birds=weeklyOrdered();birds.forEach((bird,i)=>{const tr=document.createElement('tr');if(i===0)tr.className='winner';[i+1,bird.number,...bird.speeds.map(v=>v===null?'—':v.toFixed(3)),bird.total.toFixed(3)].forEach(value=>{const td=document.createElement('td');td.textContent=value;tr.append(td);});tr.lastChild.className='speed';$('weekly-results').append(tr);});$('weekly-empty').hidden=birds.length>0;$('training-list').replaceChildren();state.trainings.forEach((t,i)=>{const button=document.createElement('button');button.textContent='Eliminar E'+(i+1);button.className='danger';button.onclick=async()=>{if(!await appConfirm('¿Eliminar el entrenamiento '+(i+1)+' de la clasificación semanal?'))return;const before=state.trainings;state.trainings=before.filter(item=>item.id!==t.id);if(!save()){state.trainings=before;return;}drawWeekly();update();};$('training-list').append(button);});}
+$('save-training').onclick=async()=>{const results=ordered();if(!results.length){appAlert('Introduce una distancia válida y al menos una suelta y llegada válidas.');return;}const invalid=state.birds.filter(b=>(b.start||b.arrival)&&!results.some(r=>r.number===b.number));if(invalid.length&&!await appConfirm('Hay '+invalid.length+' paloma(s) con horas incompletas o inválidas. Se guardarán solo las '+results.length+' con velocidad válida. ¿Continuar?'))return;const id=state.currentTrainingId||('e-'+Date.now()+'-'+Math.random().toString(36).slice(2));const entry={id,distance:state.distance,results:results.map(b=>({number:b.number,start:b.start,arrival:b.arrival,next:!!b.next,elapsed:b.elapsed,speed:b.speed}))};const index=state.trainings.findIndex(t=>t.id===id);const previous=state.trainings;const oldId=state.currentTrainingId;state.trainings=index<0?[...previous,entry]:previous.map(t=>t.id===id?entry:t);state.currentTrainingId=id;if(!save()){state.trainings=previous;state.currentTrainingId=oldId;appAlert('No se pudo guardar el entrenamiento en este dispositivo.');return;}drawWeekly();update();tab('weekly');};
+$('new-week').onclick=async()=>{if(!state.trainings.length)return;if(!await appConfirm('¿Vaciar la clasificación semanal para empezar una nueva semana? Se eliminarán los entrenamientos guardados de esta tabla. El registro actual y los números se conservarán.'))return;const before=state.trainings;const oldId=state.currentTrainingId;state.trainings=[];state.currentTrainingId=null;if(!save()){state.trainings=before;state.currentTrainingId=oldId;return;}drawWeekly();update();};
 function escapeHTML(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function buildReport(results){
 const rows=results.map((b,i)=>{const rank=i+1;const medal=rank<=3?'<span class="medal '+['gold','silver','bronze'][i]+'">'+rank+'</span>':rank;const start=b.start;const arrival=b.arrival;return '<tr><td class="rank">'+medal+'</td><td>'+escapeHTML(b.number)+'</td><td>'+escapeHTML(start.trim())+'</td><td>'+escapeHTML(arrival.trim())+'</td><td class="numeric">'+(distanceMeters()/1000).toFixed(3)+'</td><td>'+duration(b.elapsed)+'</td><td class="numeric">'+b.speed.toFixed(3)+'</td></tr>';}).join('');
@@ -4662,11 +5280,11 @@ return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="v
 </style></head><body><div class="tablewrap"><table><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div></body></html>`;
 }
 $('export-weekly').onclick=()=>{
-if(!state.trainings.length||!weeklyOrdered().length){alert('No hay resultados semanales para descargar.');return;}
+if(!state.trainings.length||!weeklyOrdered().length){appAlert('No hay resultados semanales para descargar.');return;}
 const blob=new Blob([buildWeeklyReport()],{type:'text/html;charset=utf-8'});
 const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='Clasificacion_Semanal.html';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
 };
-$('export').onclick=()=>{const results=ordered();if(!results.length){alert('Introduce una distancia válida y al menos una suelta y llegada válidas.');return;}const blob=new Blob([buildReport(results)],{type:'text/html;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='Velocidades.html';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);};
+$('export').onclick=()=>{const results=ordered();if(!results.length){appAlert('Introduce una distancia válida y al menos una suelta y llegada válidas.');return;}const blob=new Blob([buildReport(results)],{type:'text/html;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='Velocidades.html';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);};
 
 function syncFlightBirds(){
   // Leer la misma fuente persistente que utiliza la lista principal de Palomas Pro.
