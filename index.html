@@ -517,6 +517,23 @@ body {
         /* FIN ESTILOS PEDIGRÍ EXTENDIDO */
 
 
+        /* Vista previa: misma hoja horizontal de 1584 × 1224 usada para descargar. */
+        #pedigreeViewSection #captureArea { display: none !important; }
+        #pedigreePreviewViewport {
+            position: relative;
+            display: block;
+            width: 100%;
+            max-width: 1584px;
+            margin: 0 auto 18px;
+            background: #fff;
+            overflow: hidden;
+            border-radius: 3px;
+        }
+        #pedigreePreviewViewport > .pedigree-preview-sheet {
+            transform-origin: top left;
+            pointer-events: none;
+        }
+
         /* Área de captura para la imagen del pedigrí */
         #captureArea { 
             background: white; 
@@ -1098,6 +1115,10 @@ body:not(.my-pigeons-mode):not(.inflight-mode) #birdToolbar,body:not(.my-pigeons
                             <span class="error-message" id="errorAno"></span>
                         </div>
                         <div class="form-group">
+                            <label>Código de país de la anilla:</label>
+                            <input type="text" id="codigoPais" placeholder="Ej: MX, JPN, USA" maxlength="12" autocapitalize="characters" style="text-transform:uppercase;" pattern="[A-Za-z0-9-]*" title="Letras, números o guiones">
+                        </div>
+                        <div class="form-group">
                             <label>Color:</label>
                             <input type="text" id="color" placeholder="Ej: Azul" maxlength="50">
                             <span class="error-message" id="errorColor"></span>
@@ -1358,6 +1379,7 @@ body:not(.my-pigeons-mode):not(.inflight-mode) #birdToolbar,body:not(.my-pigeons
                 <button type="button" id="downloadPedigreeBtn" onclick="downloadPedigreeImage()" class="btn btn-download">📸 Descargar Pedigrí como Imagen</button>
             </div>
             
+            <div id="pedigreePreviewViewport" aria-label="Vista previa del pedigrí igual a la imagen descargada"></div>
             <div id="captureArea">
                 <div class="pedigree-header-area">
                     <h2 id="pedigreeTitle">Pedigrí</h2> 
@@ -1371,35 +1393,24 @@ body:not(.my-pigeons-mode):not(.inflight-mode) #birdToolbar,body:not(.my-pigeons
                         </div>
                         
                         <div class="column" id="gen2">
-                            <div class="gen-title">Padres</div>
                             <div id="p-father" class="pigeon-card"></div>
                             <div id="p-mother" class="pigeon-card"></div>
                         </div>
                         
                         <div class="column" id="gen3">
-                            <div class="gen-title">Abuelos P.</div>
                             <div id="p-pgf" class="pigeon-card"></div>
                             <div id="p-pgm" class="pigeon-card"></div>
-                            
-                            <div class="gen-title">Abuelos M.</div>
                             <div id="p-mgf" class="pigeon-card"></div>
                             <div id="p-mgm" class="pigeon-card"></div>
                         </div>
 
                         <div class="column" id="gen4">
-                            <div class="gen-title">Bisabuelos P. P.</div>
                             <div id="p-ppgf" class="pigeon-card"></div>
                             <div id="p-ppgm" class="pigeon-card"></div>
-
-                            <div class="gen-title">Bisabuelos P. M.</div>
                             <div id="p-pmgf" class="pigeon-card"></div>
                             <div id="p-pmgm" class="pigeon-card"></div>
-
-                            <div class="gen-title">Bisabuelos M. P.</div>
                             <div id="p-mpgf" class="pigeon-card"></div>
                             <div id="p-mpgm" class="pigeon-card"></div>
-
-                            <div class="gen-title">Bisabuelos M. M.</div>
                             <div id="p-mmgf" class="pigeon-card"></div>
                             <div id="p-mmgm" class="pigeon-card"></div>
                         </div>
@@ -2988,6 +2999,7 @@ function openRegisterForm() {
         anillo: nuevoAnillo, // Usar el valor del formulario
         nombre: document.getElementById('nombre').value.trim(),
         anoNacimiento: document.getElementById('anoNacimiento').value,
+        codigoPais: document.getElementById('codigoPais').value.trim().toUpperCase(),
         color: document.getElementById('color').value.trim(),
         linea: document.getElementById('linea').value.trim(),
         tag: document.getElementById('etiqueta') ? document.getElementById('etiqueta').value : '',
@@ -3311,6 +3323,7 @@ async function exportData() {
         updatePigeonPhotoPreview();
         document.getElementById('nombre').value = p.nombre;
         anoNacimientoInput.value = p.anoNacimiento || '';
+        document.getElementById('codigoPais').value = p.codigoPais || '';
         document.getElementById('color').value = p.color;
         document.getElementById('linea').value = p.linea;
         document.getElementById('resultados').value = p.resultados || '';
@@ -3726,6 +3739,7 @@ function buildDetailsContent(p) {
                 '<ul class="details-list">' +
                     '<li style="border-bottom: none;"><span class="label">Anillo:</span> <span class="value">' + p.anillo + '</span></li>' +
                     '<li style="border-bottom: none;"><span class="label">Nombre:</span> <span class="value">' + (p.nombre || '-') + '</span></li>' +
+                    '<li style="border-bottom: none;"><span class="label">Código de país:</span> <span class="value">' + escapeHtml(p.codigoPais || '-') + '</span></li>' +
                     '<li style="border-bottom: none;"><span class="label">Año:</span> <span class="value">' + (p.anoNacimiento || '-') + '</span></li>' +
                     '<li style="border-bottom: none;"><span class="label">Color:</span> <span class="value">' + (p.color || '-') + '</span></li>' +
                     '<li style="border-bottom: none;"><span class="label">Sexo:</span> <span class="value">' + (p.sexo || 'Desconocido') + '</span></li>' +
@@ -4248,15 +4262,19 @@ function buildDetailsContent(p) {
                 ? pigeon.foto : '';
             card.classList.toggle('has-pedigree-photo', !!mainPhoto);
 
-            // Si la paloma es manual (no registrada), mostrar solo su número de anillo.
+            // Formato de anilla en el pedigrí: número - código de país - año.
+            // Los registros antiguos sin código conservan sus datos sin inventar un país.
+            const codigoPais = String(pigeon.codigoPais || '').trim().toUpperCase();
+            const anoAnilla = String(pigeon.anoNacimiento || '').trim();
+            const anillaCompleta = [String(pigeon.anillo || ''), codigoPais, anoAnilla].filter(Boolean).join('-');
             if (pigeon._manual) {
-                card.innerHTML = `<strong>${escapeHtml(pigeon.anillo)}</strong>`;
+                card.innerHTML = `<strong>${escapeHtml(anillaCompleta)}</strong>`;
             } else {
                 const pedigreeData = `
-                    <span class="info-line">${pigeon.linea || '-'}</span>
-                    <strong>${pigeon.anillo}</strong>
-                    <span class="info-line">${pigeon.nombre || '-'}</span>
-                    <span class="info-line">${pigeon.color || '-'} / ${formatYearDisplay(pigeon.anoNacimiento)}</span>
+                    <span class="info-line">${escapeHtml(pigeon.linea || '-')}</span>
+                    <strong>${escapeHtml(anillaCompleta)}</strong>
+                    <span class="info-line">${escapeHtml(pigeon.nombre || '-')}</span>
+                    <span class="info-line">${escapeHtml(pigeon.color || '-')}</span>
                     ${pigeon.resultados ? `<div class="pigeon-results">${pigeon.resultados}</div>` : ''}
                 `;
                 card.innerHTML = mainPhoto
@@ -4313,62 +4331,39 @@ function buildDetailsContent(p) {
         applyPedigreeScaling();
     }
     
-    // Función para aplicar la escala si es necesario (modo móvil)
-    function applyPedigreeScaling() {
-        const captureArea = document.getElementById('captureArea');
-        const pedigreeTreeWrapper = document.getElementById('pedigreeTreeWrapper');
-        const pedigreeTree = document.getElementById('pedigreeTree');
-
-        // Resetear para medir el tamaño natural
-        pedigreeTreeWrapper.style.transform = 'none';
-        pedigreeTreeWrapper.style.width = 'auto'; 
-        captureArea.classList.remove('scaled-pedigree');
-
-        const containerWidth = captureArea.offsetWidth;
-        const treeWidth = pedigreeTree.scrollWidth;
-
-        if (treeWidth > containerWidth) {
-            const scale = (containerWidth - 20) / treeWidth; // 20px de margen de seguridad
-            
-            pedigreeTreeWrapper.style.transform = `scale(${scale})`;
-            pedigreeTreeWrapper.style.width = `${treeWidth}px`; // Fija el ancho para evitar el colapso
-
-            // Ajustar la altura del contenedor principal para que quepa el árbol escalado
-            const scaledHeight = pedigreeTree.offsetHeight * scale;
-            const headerHeight = document.querySelector('.pedigree-header-area').offsetHeight;
-            
-            captureArea.style.height = (scaledHeight + headerHeight + 10) + 'px'; 
-            captureArea.classList.add('scaled-pedigree');
-        } else {
-            // Si cabe, asegurar que no haya escala
-            pedigreeTreeWrapper.style.transform = 'none';
-            pedigreeTreeWrapper.style.width = '100%'; 
-            captureArea.style.height = 'auto';
-            captureArea.classList.remove('scaled-pedigree');
-        }
+    // La vista previa utiliza la MISMA composición que la descarga, reducida
+    // proporcionalmente al ancho disponible (sin reordenar columnas).
+    function renderPedigreePreview() {
+        const viewport = document.getElementById('pedigreePreviewViewport');
+        if (!viewport) return;
+        if (document.getElementById('pedigreeViewSection').style.display === 'none') return;
+        const availableWidth = viewport.clientWidth || viewport.parentElement.clientWidth;
+        if (!availableWidth) return;
+        const sheet = buildPedigreeSheet();
+        sheet.removeAttribute('aria-hidden');
+        sheet.classList.add('pedigree-preview-sheet');
+        const scale = Math.min(1, availableWidth / 1584);
+        Object.assign(sheet.style, {
+            position: 'absolute', left: '0', top: '0', zIndex: '0',
+            transform: `scale(${scale})`, transformOrigin: 'top left'
+        });
+        viewport.style.height = (1224 * scale) + 'px';
+        viewport.replaceChildren(sheet);
     }
-    
-    // Ejecutar el escalado al cargar y redimensionar
+
+    // Nombre conservado para las llamadas existentes de la aplicación.
+    function applyPedigreeScaling() {
+        renderPedigreePreview();
+    }
+
     window.addEventListener('resize', () => {
-        if (pedigreeViewSection.style.display === 'block') {
-            applyPedigreeScaling();
+        if (document.getElementById('pedigreeViewSection').style.display === 'block') {
+            renderPedigreePreview();
         }
     });
-    
-// --- FUNCIÓN CORREGIDA para descargar el pedigrí como imagen ---
-async function downloadPedigreeImage() {
-    const anillo = document.getElementById('p-self').dataset.anillo;
-    if (!anillo) { showToast('Selecciona una paloma primero.', 'error'); return; }
-    if (typeof html2canvas !== 'function') { showToast('No se cargó el generador de imágenes. Comprueba tu conexión e inténtalo de nuevo.', 'error'); return; }
-    const downloadBtn = document.getElementById('downloadPedigreeBtn');
-    if (downloadBtn && downloadBtn.disabled) return;
-    const originalBtnText = downloadBtn ? downloadBtn.innerHTML : '';
-    if (downloadBtn) {
-        downloadBtn.disabled = true;
-        downloadBtn.innerText = '⏳ Preparando imagen...';
-        downloadBtn.style.opacity = '0.75';
-    }
 
+// Una sola función dibuja la hoja que usan la vista previa y el PNG.
+function buildPedigreeSheet() {
     // Tamaño carta horizontal: 11 × 8.5 pulgadas, a 144 ppp.
     // Composición independiente de la pantalla: nunca capturar el árbol escalado del móvil.
     const W = 1584, H = 1224;
@@ -4434,16 +4429,12 @@ async function downloadPedigreeImage() {
 
     const top = 177, usable = 995;
     const columns = [
-      {x:34,w:284, ids:['p-self'], heading:'PALOMA'},
-      {x:335,w:340,ids:['p-father','p-mother'],heading:'PADRES'},
-      {x:692,w:340,ids:['p-pgf','p-pgm','p-mgf','p-mgm'],heading:'ABUELOS'},
-      {x:1049,w:500,ids:['p-ppgf','p-ppgm','p-pmgf','p-pmgm','p-mpgf','p-mpgm','p-mmgf','p-mmgm'],heading:'BISABUELOS'}
+      {x:34,w:284, ids:['p-self']},
+      {x:335,w:340,ids:['p-father','p-mother']},
+      {x:692,w:340,ids:['p-pgf','p-pgm','p-mgf','p-mgm']},
+      {x:1049,w:500,ids:['p-ppgf','p-ppgm','p-pmgf','p-pmgm','p-mpgf','p-mpgm','p-mmgf','p-mmgm']}
     ];
     columns.forEach(col => {
-        const label = document.createElement('div');
-        label.textContent = col.heading;
-        label.style.cssText = `position:absolute;left:${col.x}px;top:145px;width:${col.w}px;text-align:center;font-size:17px;font-weight:bold;letter-spacing:1px;color:#34495e;`;
-        sheet.appendChild(label);
         const gap = col.ids.length === 8 ? 8 : 14;
         const cardH = (usable - gap * (col.ids.length - 1)) / col.ids.length;
         col.ids.forEach((id, i) => {
@@ -4462,6 +4453,25 @@ async function downloadPedigreeImage() {
             sheet.appendChild(card);
         });
     });
+    return sheet;
+ }
+
+// --- FUNCIÓN CORREGIDA para descargar el pedigrí como imagen ---
+async function downloadPedigreeImage() {
+    const anillo = document.getElementById('p-self').dataset.anillo;
+    if (!anillo) { showToast('Selecciona una paloma primero.', 'error'); return; }
+    if (typeof html2canvas !== 'function') { showToast('No se cargó el generador de imágenes. Comprueba tu conexión e inténtalo de nuevo.', 'error'); return; }
+    const downloadBtn = document.getElementById('downloadPedigreeBtn');
+    if (downloadBtn && downloadBtn.disabled) return;
+    const originalBtnText = downloadBtn ? downloadBtn.innerHTML : '';
+    if (downloadBtn) {
+        downloadBtn.disabled = true;
+        downloadBtn.innerText = '⏳ Preparando imagen...';
+        downloadBtn.style.opacity = '0.75';
+    }
+
+    const W = 1584, H = 1224;
+    const sheet = buildPedigreeSheet();
     document.body.appendChild(sheet);
     const filename = `${(breederInfo.name || 'Pedigri').replace(/[^a-zA-Z0-9]/g, '_')}-${anillo}.png`;
     try {
