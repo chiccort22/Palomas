@@ -1786,7 +1786,7 @@ th,
 <div id="pigeonProfileOverlay" class="pigeon-profile-overlay" role="dialog" aria-modal="true" aria-label="Ficha individual de la paloma" hidden>
     <div class="pigeon-profile-inner">
         <div class="pigeon-profile-top">
-            <button type="button" class="pigeon-profile-icon" id="pigeonProfileBack" aria-label="Volver a la lista"><i class="fas fa-arrow-left"></i></button>
+            <button type="button" class="pigeon-profile-icon" id="pigeonProfileBack" aria-label="Volver"><i class="fas fa-arrow-left"></i></button>
             <strong>Ficha de paloma</strong>
             <button type="button" class="pigeon-profile-icon" id="pigeonProfileEdit" aria-label="Editar paloma"><i class="fas fa-pen"></i></button>
         </div>
@@ -4070,6 +4070,7 @@ function cancelEdit() {
     let pigeonProfileTab = 'datos';
     let pigeonProfileOrigin = 'table';
     let pigeonProfileListScroll = 0;
+    const pigeonProfileHistory = [];
     const pigeonProfileOverlay = document.getElementById('pigeonProfileOverlay');
     const profileEscape = value => escapeHtml(value == null ? '' : String(value)).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     const profilePhotoOk = src => typeof src === 'string' && /^data:image\/(?:jpeg|png|webp);base64,/.test(src);
@@ -4078,6 +4079,11 @@ function cancelEdit() {
     function openPigeonProfile(anillo, tab = 'datos', fromPedigree = false) {
         const p = pigeons.find(b => String(b.anillo) === String(anillo));
         if (!p) { showToast('No se encontró la paloma.', 'error'); return; }
+        // Si la ficha ya está abierta, conserva la paloma actual para que la flecha
+        // pueda volver por la cadena de padres, madres o crías visitadas.
+        if (!pigeonProfileOverlay.hidden && pigeonProfileRing !== null && String(pigeonProfileRing) !== String(p.anillo)) {
+            pigeonProfileHistory.push({ring:pigeonProfileRing, tab:pigeonProfileTab});
+        }
         if (!fromPedigree && pigeonProfileOverlay.hidden) {
             pigeonProfileOrigin = currentView === 'inflight' ? 'inflight' : 'table';
             pigeonProfileListScroll = window.scrollY;
@@ -4093,6 +4099,23 @@ function cancelEdit() {
     function closePigeonProfile() {
         pigeonProfileOverlay.hidden = true;
         pigeonProfileRing = null;
+        pigeonProfileHistory.length = 0;
+    }
+
+    function backPigeonProfile() {
+        while (pigeonProfileHistory.length) {
+            const previous = pigeonProfileHistory.pop();
+            const exists = pigeons.some(p => String(p.anillo) === String(previous.ring));
+            if (!exists) continue;
+            pigeonProfileRing = previous.ring;
+            pigeonProfileTab = previous.tab || 'datos';
+            pigeonProfileOverlay.hidden = false;
+            pigeonProfileOverlay.scrollTop = 0;
+            renderPigeonProfile();
+            document.getElementById('pigeonProfileBack').focus({preventScroll:true});
+            return;
+        }
+        closePigeonProfile();
     }
 
     function profileRelativeHtml(p, label) {
@@ -4196,7 +4219,7 @@ function cancelEdit() {
         });
     }
 
-    document.getElementById('pigeonProfileBack').addEventListener('click', closePigeonProfile);
+    document.getElementById('pigeonProfileBack').addEventListener('click', backPigeonProfile);
     document.getElementById('pigeonProfileEdit').addEventListener('click', () => {
         const ring = pigeonProfileRing;
         closePigeonProfile();
