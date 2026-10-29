@@ -3759,22 +3759,29 @@ async function exportData() {
     }
     // ** FIN LÓGICA NATIVA **
 
-    // Compartir el archivo directamente desde el gesto del usuario (iOS/PWA).
+    // Compartir el archivo cuando la plataforma lo admite; si falla, descargarlo.
     try {
         const file = new File([dataStr], fileName, { type: mimeType });
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        let canShareFile = false;
+        try {
+            canShareFile = Boolean(navigator.share && navigator.canShare && navigator.canShare({ files: [file] }));
+        } catch (_) {
+            canShareFile = false;
+        }
+
+        if (canShareFile) {
             try {
                 await navigator.share({ files: [file] });
                 showToast("Copia de seguridad compartida. Si elegiste Guardar en Archivos, estará en la carpeta seleccionada.", "success");
+                return;
             } catch (error) {
-                if (error.name !== "AbortError") {
-                    showToast("No se pudo compartir la copia de seguridad. Inténtalo de nuevo.", "error");
-                }
+                // Si el usuario cerró la hoja, no iniciar otra acción por su cuenta.
+                if (error && error.name === "AbortError") return;
+                // En otros errores se continúa con la descarga de respaldo.
             }
-            return;
         }
 
-        // Descarga para navegadores sin soporte para compartir archivos.
+        // Descarga para navegadores sin soporte o cuando el menú de compartir falla.
         const blob = new Blob([dataStr], { type: mimeType });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
