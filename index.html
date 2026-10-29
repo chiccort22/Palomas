@@ -1402,11 +1402,11 @@ th,
 
     <div id="sidebar">
         <a href="javascript:void(0)" onclick="showPigeonTable()"><i class="fas fa-table"></i> Mis Palomas <span class="sidebar-count" id="count-mis">0</span></a>
-        <a href="javascript:void(0)" onclick="openArchivedPigeons()"><i class="fas fa-archive"></i> Archivadas <span class="sidebar-count" id="count-archived">0</span></a>
         <a href="javascript:void(0)" onclick="openInFlightPigeons()"><i class="fas fa-wind"></i> En Vuelo <span class="sidebar-count" id="count-inflight">0</span></a>
         <a href="javascript:void(0)" onclick="openActivePairs()"><i class="fas fa-heart"></i> Parejas Activas <span class="sidebar-count" id="count-pairs">0</span></a>
     <a href="javascript:void(0)" onclick="showView('quick-results')"><i class="fas fa-trophy"></i> Reg. Resultados</a>
     <a href="javascript:void(0)" onclick="closeNav(); showView('velocities')"><i class="fas fa-stopwatch"></i> Velocidades Indiv.</a>
+        <a href="javascript:void(0)" onclick="openArchivedPigeons()"><i class="fas fa-archive"></i> Archivadas <span class="sidebar-count" id="count-archived">0</span></a>
     <a href="javascript:void(0)" onclick="openTrash()"><i class="fas fa-trash"></i> Papelera</a>
     <a href="javascript:void(0)" onclick="openConfig()"><i class="fas fa-cog"></i> Configuración</a>
 
@@ -4982,7 +4982,7 @@ function buildDetailsContent(p) {
             front.addEventListener('touchstart',e=>{if(e.touches.length!==1)return; x0=e.touches[0].clientX;y0=e.touches[0].clientY;started=true;moved=false;},{passive:true});
             front.addEventListener('touchmove',e=>{if(!started)return; const dx=e.touches[0].clientX-x0,dy=e.touches[0].clientY-y0; if(Math.abs(dx)>14&&Math.abs(dx)>Math.abs(dy)*1.2)moved=true;},{passive:true});
             front.addEventListener('touchend',e=>{if(!started)return;started=false; const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;
-                if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.2){const wasOpen=item.classList.contains('open'),wasArchiveOpen=item.classList.contains('archive-open');closeFlightActions();if(currentView!=='archived'&&dx>0&&!wasArchiveOpen)item.classList.add('archive-open');else if(dx<0&&!wasOpen)item.classList.add('open');moved=true;setTimeout(()=>{moved=false},450);}
+                if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.2){const anyOpen=!!document.querySelector('#flightSwipeList .flight-item.open,#flightSwipeList .flight-item.archive-open');closeFlightActions();if(!anyOpen){if(currentView!=='archived'&&dx>0)item.classList.add('archive-open');else if(dx<0)item.classList.add('open');}moved=true;setTimeout(()=>{moved=false},450);}
             },{passive:true});
             front.addEventListener('click',()=>{if(moved)return;if(item.classList.contains('open')||item.classList.contains('archive-open')){closeFlightActions();return;} toggleDetails(p.anillo);});
             item.append(actions,front);list.append(item);
