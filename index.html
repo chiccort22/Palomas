@@ -1869,8 +1869,37 @@ th,
 
 <script>
     const currentYear = new Date().getFullYear();
-    let pigeons = JSON.parse(localStorage.getItem('misPalomas')) || [];
-    let breederInfo = JSON.parse(localStorage.getItem('breederInfo')) || {};
+    const storageReadWarnings = new Set();
+    const storageRecoverySaved = new Set();
+    function readStoredJSON(key, fallback, isValid = () => true) {
+        let raw;
+        try { raw = localStorage.getItem(key); }
+        catch (error) {
+            storageReadWarnings.add(key);
+            console.warn('No se pudo leer el almacenamiento local:', key, error);
+            return fallback;
+        }
+        if (raw === null) return fallback;
+        try {
+            const value = JSON.parse(raw);
+            if (!isValid(value)) throw new Error('La estructura guardada no es válida.');
+            return value;
+        } catch (error) {
+            storageReadWarnings.add(key);
+            // Conserva el valor original para que un guardado posterior no lo destruya sin dejar rastro.
+            try {
+                const recoveryKey = 'palomasProRecovery:' + key;
+                if (localStorage.getItem(recoveryKey) === null) localStorage.setItem(recoveryKey, raw);
+                storageRecoverySaved.add(key);
+            } catch (recoveryError) { console.warn('No se pudo conservar la copia de recuperación:', key, recoveryError); }
+            console.warn('Se encontró información local dañada:', key, error);
+            return fallback;
+        }
+    }
+    const isRecord = value => !!value && typeof value === 'object' && !Array.isArray(value);
+    const isPigeonRecord = value => isRecord(value) && (typeof value.anillo === 'string' || typeof value.anillo === 'number') && String(value.anillo).trim() !== '';
+    let pigeons = readStoredJSON('misPalomas', [], value => Array.isArray(value) && value.every(isPigeonRecord));
+    let breederInfo = readStoredJSON('breederInfo', {}, isRecord);
     let pigeonPhotoValue = '';
     function updatePigeonFormHero() {
         const summary = document.getElementById('pigeonFormRingSummary');
@@ -2183,7 +2212,7 @@ function appAlert(message, opts = {}) { return appDialogManager(message, {...opt
     } catch (e) {}
 
     // --- PAREJAS ACTIVAS: almacenamiento y UI ---
-    let activePairs = JSON.parse(localStorage.getItem('activePairs')) || [];
+    let activePairs = readStoredJSON('activePairs', [], value => Array.isArray(value) && value.every(isRecord));
     let activePairId = localStorage.getItem('activePairId') || null;
     let editingActivePairId = null; // null or id when editing a pair
     const HATCH_DAYS_AFTER_LAYING = 18;
@@ -2200,7 +2229,7 @@ function appAlert(message, opts = {}) { return appDialogManager(message, {...opt
     }
 
     // --- PAPELERA: almacenamiento (soft-delete) ---
-    let trash = JSON.parse(localStorage.getItem('trash')) || [];
+    let trash = readStoredJSON('trash', [], value => Array.isArray(value) && value.every(isRecord));
 
     // Las fotos viven en IndexedDB; localStorage conserva solo sus identificadores.
     const PHOTO_DB_NAME = 'PalomasProPhotos';
@@ -3796,6 +3825,13 @@ function openRegisterForm() {
 
     form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    await photoStorageReady;
+    const currentPhotoRecord = isEditing ? pigeons.find(p => String(p.anillo) === String(anilloInput.dataset.originalAnillo)) : null;
+    const hasNewPhoto = !!pigeonPhotoValue && (!currentPhotoRecord || pigeonPhotoValue !== currentPhotoRecord.foto);
+    if (hasNewPhoto && !photoStorageAvailable) {
+        showToast('No se guardó el cambio: IndexedDB no está disponible para almacenar la foto. Tus datos anteriores se conservaron.', 'error');
+        return;
+    }
     
     // Validar antes de procesar
     if (!validatePigeonForm()) {
@@ -3956,6 +3992,10 @@ if (window.Android) {
 async function exportData() {
     await photoStorageReady;
     try { await photoWriteQueue; } catch (_) {}
+    if (storageReadWarnings.size) {
+        showToast('No se creó el respaldo porque hay datos locales dañados. Restaura una copia válida antes de exportar.', 'error');
+        return;
+    }
     if (pigeons.length === 0) {
         // [MODIFICACIÓN] Adaptar mensaje para entorno Android
         if (window.Android) {
@@ -4097,8 +4137,15 @@ async function exportData() {
                 } else {
                     throw new Error("El archivo no contiene un formato de datos de palomas válido.");
                 }
-                if (!Array.isArray(importedPigeons)) throw new Error('La lista de palomas no es válida.');
-                if (importedData && Object.prototype.hasOwnProperty.call(importedData, 'trash') && !Array.isArray(importedData.trash)) {
+                if (!Array.isArray(importedPigeons) || !importedPigeons.every(isPigeonRecord)) throw new Error('La lista de palomas no es válida. No se modificaron los datos actuales.');
+                if (!isRecord(importedBreederInfo)) throw new Error('Los datos del criador no son válidos. No se modificaron los datos actuales.');
+                if (!Array.isArray(importedData) && Object.prototype.hasOwnProperty.call(importedData, 'activePairs') && (!Array.isArray(importedData.activePairs) || !importedData.activePairs.every(isRecord))) {
+                    throw new Error('La lista de parejas activas no es válida. No se modificaron los datos actuales.');
+                }
+                if (!Array.isArray(importedData) && Object.prototype.hasOwnProperty.call(importedData, 'activePairId') && importedData.activePairId !== null && typeof importedData.activePairId !== 'string') {
+                    throw new Error('La pareja activa seleccionada no es válida. No se modificaron los datos actuales.');
+                }
+                if (importedData && Object.prototype.hasOwnProperty.call(importedData, 'trash') && (!Array.isArray(importedData.trash) || !importedData.trash.every(isRecord))) {
                     throw new Error('La papelera incluida en el respaldo no es válida.');
                 }
                 if (importedData && Object.prototype.hasOwnProperty.call(importedData, 'velocities')) {
@@ -4108,30 +4155,44 @@ async function exportData() {
                     }
                 }
 
-                pigeons = importedPigeons;
-                breederInfo = importedBreederInfo;
-                // Restaurar parejas activas si vienen en el backup
-                if (importedData.activePairs) {
-                    activePairs = importedData.activePairs;
+                // Validar y preparar todo antes de sustituir el estado actual.
+                const hasActivePairs = !Array.isArray(importedData) && Object.prototype.hasOwnProperty.call(importedData, 'activePairs');
+                const hasTrash = !Array.isArray(importedData) && Object.prototype.hasOwnProperty.call(importedData, 'trash');
+                const nextActivePairs = hasActivePairs ? importedData.activePairs : readStoredJSON('activePairs', [], value => Array.isArray(value) && value.every(isRecord));
+                const nextActivePairId = !Array.isArray(importedData) && importedData.activePairId ? importedData.activePairId : null;
+                const nextTrash = hasTrash ? importedData.trash : trash;
+                const previousState = {pigeons, breederInfo, activePairs, activePairId, trash};
+                const keysToRestore = ['misPalomas','breederInfo','activePairs','activePairId','trash','palomas_pro_velocidades_v1'];
+                const previousStorage = Object.fromEntries(keysToRestore.map(key => [key, localStorage.getItem(key)]));
+                try {
+                    pigeons = importedPigeons;
+                    breederInfo = importedBreederInfo;
+                    activePairs = nextActivePairs;
+                    activePairId = nextActivePairId;
+                    trash = nextTrash;
+
+                    // Escribe las fotos primero sin borrar las anteriores. Si falla, el respaldo actual sigue intacto.
+                    if (photoStorageAvailable) {
+                        await photoWriteQueue;
+                        await storePhotoRecords(photoRecords(), false);
+                    }
+                    localStorage.setItem('misPalomas', JSON.stringify(photoStorageAvailable ? stripPhotoData(pigeons) : pigeons));
+                    localStorage.setItem('breederInfo', JSON.stringify(breederInfo));
                     localStorage.setItem('activePairs', JSON.stringify(activePairs));
-                } else {
-                    activePairs = JSON.parse(localStorage.getItem('activePairs')) || [];
-                }
-                if (importedData.activePairId) {
-                    activePairId = importedData.activePairId;
-                    localStorage.setItem('activePairId', activePairId);
-                } else {
-                    activePairId = null;
-                    localStorage.removeItem('activePairId');
+                    if (activePairId) localStorage.setItem('activePairId', activePairId);
+                    else localStorage.removeItem('activePairId');
+                    if (hasTrash) localStorage.setItem('trash', JSON.stringify(photoStorageAvailable ? stripPhotoData(trash) : trash));
+                } catch (commitError) {
+                    ({pigeons, breederInfo, activePairs, activePairId, trash} = previousState);
+                    for (const key of keysToRestore) {
+                        try {
+                            if (previousStorage[key] === null) localStorage.removeItem(key);
+                            else localStorage.setItem(key, previousStorage[key]);
+                        } catch (rollbackError) { console.error('No se pudo revertir el almacenamiento:', key, rollbackError); }
+                    }
+                    throw commitError;
                 }
 
-                // Respaldos nuevos restauran papelera y velocidades. Los antiguos
-                // no traían estos campos, así que se conservan los datos actuales.
-                if (importedData && Object.prototype.hasOwnProperty.call(importedData, 'trash')) {
-                    trash = importedData.trash;
-                }
-                if (photoStorageAvailable) await persistPhotoStore();
-                if (importedData && Object.prototype.hasOwnProperty.call(importedData, 'trash')) saveTrash();
                 let velocityRestoreOk = true;
                 if (importedData && Object.prototype.hasOwnProperty.call(importedData, 'velocities')) {
                     velocityRestoreOk = typeof window.restorePalomasProVelocities === 'function'
@@ -4139,8 +4200,14 @@ async function exportData() {
                         : false;
                 }
 
-                saveData();
-                localStorage.setItem('breederInfo', JSON.stringify(importedBreederInfo));
+                try { if (typeof window.syncFlightBirds === 'function') window.syncFlightBirds(); } catch (syncError) { console.warn('No se pudo actualizar En Vuelo tras importar', syncError); }
+                if (photoStorageAvailable) persistPhotoStore().catch(photoError => console.warn('No se pudieron depurar fotos sin referencia tras importar', photoError));
+                try { updateSidebarCounts(); } catch (_) {}
+                for (const key of storageReadWarnings) {
+                    try { localStorage.removeItem('palomasProRecovery:' + key); } catch (_) {}
+                }
+                storageReadWarnings.clear();
+                storageRecoverySaved.clear();
 
                 renderTable();
                 updateSelects();
@@ -5698,6 +5765,12 @@ photoStorageReady.then(ok => {
         updateSidebarCounts();
     } else {
         showToast('No se pudieron preparar las fotos en IndexedDB. Se conservaron los datos existentes; crea una copia de seguridad.', 'error');
+    }
+    if (storageReadWarnings.size) {
+        const recoveryText = storageRecoverySaved.size
+            ? 'Se conservó una copia de recuperación local.'
+            : 'No fue posible conservar otra copia local.';
+        showToast('Se detectaron datos locales dañados (' + Array.from(storageReadWarnings).join(', ') + '). ' + recoveryText + ' Restaura un respaldo antes de continuar.', 'error');
     }
 });
 
