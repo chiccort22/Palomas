@@ -1524,6 +1524,8 @@ th,
                                         <input type="number" id="padreManualAnoInput" placeholder="Ej. 2022" min="1900" max="2100" step="1">
                                         <label for="padreManualLineaInput">Línea</label>
                                         <input type="text" id="padreManualLineaInput" placeholder="Línea del padre" autocomplete="off">
+                                        <label for="padreManualNotasInput">Notas</label>
+                                        <textarea id="padreManualNotasInput" rows="2" placeholder="Notas sobre el padre"></textarea>
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -1536,6 +1538,8 @@ th,
                                         <input type="number" id="madreManualAnoInput" placeholder="Ej. 2022" min="1900" max="2100" step="1">
                                         <label for="madreManualLineaInput">Línea</label>
                                         <input type="text" id="madreManualLineaInput" placeholder="Línea de la madre" autocomplete="off">
+                                        <label for="madreManualNotasInput">Notas</label>
+                                        <textarea id="madreManualNotasInput" rows="2" placeholder="Notas sobre la madre"></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -2760,6 +2764,7 @@ function appAlert(message, opts = {}) { return appDialogManager(message, {...opt
         }
         document.getElementById('padreManualAnoInput').value = '';
         document.getElementById('padreManualLineaInput').value = '';
+        document.getElementById('padreManualNotasInput').value = '';
 
         if ([...madreSel.options].some(o => o.value === p.mother)) {
             madreSel.value = p.mother; madreManualFields.style.display = 'none'; madreManual.value = '';
@@ -2768,6 +2773,7 @@ function appAlert(message, opts = {}) { return appDialogManager(message, {...opt
         }
         document.getElementById('madreManualAnoInput').value = '';
         document.getElementById('madreManualLineaInput').value = '';
+        document.getElementById('madreManualNotasInput').value = '';
 
  
         // Opcional: marcar sexo Desconocido por defecto
@@ -3652,9 +3658,11 @@ function openRegisterForm() {
         padre: padreManualActivo ? document.getElementById('padreManualInput').value.trim() : document.getElementById('padreSelect').value,
         padreManualAno: padreManualActivo ? document.getElementById('padreManualAnoInput').value.trim() : '',
         padreManualLinea: padreManualActivo ? document.getElementById('padreManualLineaInput').value.trim() : '',
+        padreManualNotas: padreManualActivo ? document.getElementById('padreManualNotasInput').value.trim() : '',
         madre: madreManualActivo ? document.getElementById('madreManualInput').value.trim() : document.getElementById('madreSelect').value,
         madreManualAno: madreManualActivo ? document.getElementById('madreManualAnoInput').value.trim() : '',
-        madreManualLinea: madreManualActivo ? document.getElementById('madreManualLineaInput').value.trim() : ''
+        madreManualLinea: madreManualActivo ? document.getElementById('madreManualLineaInput').value.trim() : '',
+        madreManualNotas: madreManualActivo ? document.getElementById('madreManualNotasInput').value.trim() : ''
     };
 
     // Si se está usando una pareja activa (aplicada previamente con "Usar en Registro"), forzar padres, año y sexo
@@ -4000,18 +4008,21 @@ async function exportData() {
             padreManual.value = '';
             document.getElementById('padreManualAnoInput').value = '';
             document.getElementById('padreManualLineaInput').value = '';
+            document.getElementById('padreManualNotasInput').value = '';
         } else if (p.padre) {
             padreSel.value = '__manual__';
             padreManualFields.style.display = 'grid';
             padreManual.value = p.padre;
             document.getElementById('padreManualAnoInput').value = p.padreManualAno || '';
             document.getElementById('padreManualLineaInput').value = p.padreManualLinea || '';
+            document.getElementById('padreManualNotasInput').value = p.padreManualNotas || '';
         } else {
             padreSel.value = '';
             padreManualFields.style.display = 'none';
             padreManual.value = '';
             document.getElementById('padreManualAnoInput').value = '';
             document.getElementById('padreManualLineaInput').value = '';
+            document.getElementById('padreManualNotasInput').value = '';
         }
 
         if (p.madre && pigeons.find(x => x.anillo === p.madre)) {
@@ -4020,18 +4031,21 @@ async function exportData() {
             madreManual.value = '';
             document.getElementById('madreManualAnoInput').value = '';
             document.getElementById('madreManualLineaInput').value = '';
+            document.getElementById('madreManualNotasInput').value = '';
         } else if (p.madre) {
             madreSel.value = '__manual__';
             madreManualFields.style.display = 'grid';
             madreManual.value = p.madre;
             document.getElementById('madreManualAnoInput').value = p.madreManualAno || '';
             document.getElementById('madreManualLineaInput').value = p.madreManualLinea || '';
+            document.getElementById('madreManualNotasInput').value = p.madreManualNotas || '';
         } else {
             madreSel.value = '';
             madreManualFields.style.display = 'none';
             madreManual.value = '';
             document.getElementById('madreManualAnoInput').value = '';
             document.getElementById('madreManualLineaInput').value = '';
+            document.getElementById('madreManualNotasInput').value = '';
         }
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -4046,6 +4060,7 @@ function resetPigeonEditForm() {
         document.getElementById(prefix + 'ManualInput').value = '';
         document.getElementById(prefix + 'ManualAnoInput').value = '';
         document.getElementById(prefix + 'ManualLineaInput').value = '';
+        document.getElementById(prefix + 'ManualNotasInput').value = '';
     });
     
     submitBtn.innerText = "Registrar Paloma";
@@ -4177,7 +4192,7 @@ function cancelEdit() {
     function profileRelativeHtml(p, label) {
         if (!p) return `<div class="pigeon-profile-relative"><span><strong>${profileEscape(label)}</strong><small>Sin registrar</small></span></div>`;
         const registered = pigeons.some(b => b.anillo === p.anillo);
-        const details = [p.anoNacimiento ? `Año ${p.anoNacimiento}` : '', p.linea ? `Línea ${p.linea}` : ''].filter(Boolean).join(' · ');
+        const details = [p.anoNacimiento ? `Año ${p.anoNacimiento}` : '', p.linea ? `Línea ${p.linea}` : '', p.notas ? `Notas: ${p.notas}` : ''].filter(Boolean).join(' · ');
         const image = profilePhotoOk(p.foto)
             ? `<img src="${p.foto}" alt="Fotografía">`
             : '<span class="pigeon-relative-placeholder"><i class="fas fa-dove"></i></span>';
@@ -4227,8 +4242,8 @@ function cancelEdit() {
                 ['Etiqueta',p.tag || p.etiqueta]
             ];
             const rows = fields.map(([label,value]) => `<div class="pigeon-profile-field"><span>${label}</span><strong>${profileEscape(value || '—')}</strong></div>`).join('');
-            const father = pigeons.find(b => b.anillo === p.padre) || (p.padre ? {anillo:p.padre, anoNacimiento:p.padreManualAno, linea:p.padreManualLinea} : null);
-            const mother = pigeons.find(b => b.anillo === p.madre) || (p.madre ? {anillo:p.madre, anoNacimiento:p.madreManualAno, linea:p.madreManualLinea} : null);
+            const father = pigeons.find(b => b.anillo === p.padre) || (p.padre ? {anillo:p.padre, anoNacimiento:p.padreManualAno, linea:p.padreManualLinea, notas:p.padreManualNotas} : null);
+            const mother = pigeons.find(b => b.anillo === p.madre) || (p.madre ? {anillo:p.madre, anoNacimiento:p.madreManualAno, linea:p.madreManualLinea, notas:p.madreManualNotas} : null);
             content.innerHTML = `<section class="pigeon-profile-panel"><h3>Información general</h3>${rows}</section>
                 <section class="pigeon-profile-panel"><h3>Padres</h3>${profileRelativeHtml(father,'Padre')}${profileRelativeHtml(mother,'Madre')}</section>
                 <section class="pigeon-profile-panel"><h3>Notas y observaciones</h3><p class="pigeon-profile-notes">${profileEscape(p.resultados || 'Sin notas registradas.')}</p></section>
@@ -4321,12 +4336,12 @@ function cancelEdit() {
             if (!anillo) return null;
             const found = pigeons.find(item => item.anillo === anillo);
             if (found) return found;
-            return { anillo: anillo, nombre: '', sexo: 'Desconocido', linea: manualDetails.linea || '', color: '', anoNacimiento: manualDetails.anoNacimiento || '', resultados: '', _manual: true, padre: '', madre: '' };
+            return { anillo: anillo, nombre: '', sexo: 'Desconocido', linea: manualDetails.linea || '', color: '', anoNacimiento: manualDetails.anoNacimiento || '', notas: manualDetails.notas || '', resultados: '', _manual: true, padre: '', madre: '' };
         };
 
         // Generación 2 (Padres)
-        const father = findPigeon(pigeon.padre, {anoNacimiento:pigeon.padreManualAno, linea:pigeon.padreManualLinea});
-        const mother = findPigeon(pigeon.madre, {anoNacimiento:pigeon.madreManualAno, linea:pigeon.madreManualLinea});
+        const father = findPigeon(pigeon.padre, {anoNacimiento:pigeon.padreManualAno, linea:pigeon.padreManualLinea, notas:pigeon.padreManualNotas});
+        const mother = findPigeon(pigeon.madre, {anoNacimiento:pigeon.madreManualAno, linea:pigeon.madreManualLinea, notas:pigeon.madreManualNotas});
 
         path.parents.push({ rel: 'Padre', p: father });
         path.parents.push({ rel: 'Madre', p: mother });
@@ -4380,7 +4395,7 @@ function cancelEdit() {
             if (typeof p === 'string') p = { anillo: p, nombre: '', sexo: 'Desconocido', _manual: true };
             const linkText = p.anillo + (p.nombre ? ` (${p.nombre})` : '');
             const sexIcon = getSexIcon(p.sexo);
-            const manualDetails = [p.linea ? `Línea: ${p.linea}` : '', p.anoNacimiento ? `Año: ${p.anoNacimiento}` : ''].filter(Boolean).join(' · ');
+            const manualDetails = [p.linea ? `Línea: ${p.linea}` : '', p.anoNacimiento ? `Año: ${p.anoNacimiento}` : '', p.notas ? `Notas: ${p.notas}` : ''].filter(Boolean).join(' · ');
             // Si es marcador/manual, no hacemos clic (no existe detalle)
             if (p._manual) {
                 return `${escapeHtml(linkText)} ${sexIcon}${manualDetails ? `<small class="pigeon-profile-muted" style="display:block">${escapeHtml(manualDetails)}</small>` : ''}`;
@@ -4875,6 +4890,7 @@ function buildDetailsContent(p) {
                 m.value = '';
                 document.getElementById('padreManualAnoInput').value = '';
                 document.getElementById('padreManualLineaInput').value = '';
+                document.getElementById('padreManualNotasInput').value = '';
             }
         };
 
@@ -4889,6 +4905,7 @@ function buildDetailsContent(p) {
                 m.value = '';
                 document.getElementById('madreManualAnoInput').value = '';
                 document.getElementById('madreManualLineaInput').value = '';
+                document.getElementById('madreManualNotasInput').value = '';
             }
         };
     }
@@ -5070,7 +5087,7 @@ function buildDetailsContent(p) {
             const anoAnilla = String(pigeon.anoNacimiento || '').trim();
             const anillaCompleta = [String(pigeon.anillo || ''), codigoPais, anoAnilla].filter(Boolean).join('-');
             if (pigeon._manual) {
-                card.innerHTML = `${pigeon.linea ? `<span class="info-line">${escapeHtml(pigeon.linea)}</span>` : ''}<strong>${escapeHtml(anillaCompleta)}</strong>`;
+                card.innerHTML = `${pigeon.linea ? `<span class="info-line">${escapeHtml(pigeon.linea)}</span>` : ''}<strong>${escapeHtml(anillaCompleta)}</strong>${pigeon.notas ? `<span class="info-line">${escapeHtml(pigeon.notas)}</span>` : ''}`;
             } else {
                 const pedigreeData = `
                     <span class="info-line">${escapeHtml(pigeon.linea || '-')}</span>
@@ -5093,8 +5110,8 @@ function buildDetailsContent(p) {
             }
 
             // Continuar con la siguiente generación. Si el padre/madre no está registrado, crear marcador manual
-            const father = (pigeon && pigeon.padre) ? (pigeons.find(p => p.anillo === pigeon.padre) || { anillo: pigeon.padre, nombre: '', sexo: 'Desconocido', linea: pigeon.padreManualLinea || '', color: '', anoNacimiento: pigeon.padreManualAno || '', resultados: '', _manual: true, padre: '', madre: '' }) : null;
-            const mother = (pigeon && pigeon.madre) ? (pigeons.find(p => p.anillo === pigeon.madre) || { anillo: pigeon.madre, nombre: '', sexo: 'Desconocido', linea: pigeon.madreManualLinea || '', color: '', anoNacimiento: pigeon.madreManualAno || '', resultados: '', _manual: true, padre: '', madre: '' }) : null;
+            const father = (pigeon && pigeon.padre) ? (pigeons.find(p => p.anillo === pigeon.padre) || { anillo: pigeon.padre, nombre: '', sexo: 'Desconocido', linea: pigeon.padreManualLinea || '', notas: pigeon.padreManualNotas || '', color: '', anoNacimiento: pigeon.padreManualAno || '', resultados: '', _manual: true, padre: '', madre: '' }) : null;
+            const mother = (pigeon && pigeon.madre) ? (pigeons.find(p => p.anillo === pigeon.madre) || { anillo: pigeon.madre, nombre: '', sexo: 'Desconocido', linea: pigeon.madreManualLinea || '', notas: pigeon.madreManualNotas || '', color: '', anoNacimiento: pigeon.madreManualAno || '', resultados: '', _manual: true, padre: '', madre: '' }) : null;
 
             switch (cardId) {
                 case 'p-self':
