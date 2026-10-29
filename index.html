@@ -2178,6 +2178,18 @@ function appAlert(message, opts = {}) { return appDialogManager(message, {...opt
     let activePairs = JSON.parse(localStorage.getItem('activePairs')) || [];
     let activePairId = localStorage.getItem('activePairId') || null;
     let editingActivePairId = null; // null or id when editing a pair
+    const HATCH_DAYS_AFTER_LAYING = 18;
+
+    function getHatchTimestamp(dateValue) {
+        if (!dateValue) return null;
+        const parts = String(dateValue).split('-').map(Number);
+        if (parts.length !== 3 || parts.some(n => !Number.isFinite(n))) return null;
+        const [year, month, day] = parts;
+        const hatchDate = new Date(year, month - 1, day);
+        if (hatchDate.getFullYear() !== year || hatchDate.getMonth() !== month - 1 || hatchDate.getDate() !== day) return null;
+        hatchDate.setDate(hatchDate.getDate() + HATCH_DAYS_AFTER_LAYING);
+        return hatchDate.getTime();
+    }
 
     // --- PAPELERA: almacenamiento (soft-delete) ---
     let trash = JSON.parse(localStorage.getItem('trash')) || [];
@@ -2274,11 +2286,15 @@ function appAlert(message, opts = {}) { return appDialogManager(message, {...opt
         const item = trash[idx];
         // Restaurar según el tipo (paloma o pareja)
         if (item.type === 'pair') {
-            // Restaurar pareja activa
-            const restoredPair = { id: item.anillo, father: item.father, mother: item.mother, notes: item.notes || '' };
+            // Restaurar todos los datos de la pareja, incluidos fecha y estado de eclosión.
+            const restoredPair = Object.assign({}, item, {id:item.id || item.anillo});
+            delete restoredPair.anillo;
+            delete restoredPair.type;
+            delete restoredPair.deletedAt;
             // Evitar duplicados
             if (!activePairs.some(p => p.id === restoredPair.id)) activePairs.push(restoredPair);
             localStorage.setItem('activePairs', JSON.stringify(activePairs));
+            if (restoredPair.hatchAt && !restoredPair.hatchDone) scheduleNativeHatch(restoredPair);
             // Eliminar de la papelera
             trash.splice(idx,1);
             saveTrash();
@@ -2296,7 +2312,9 @@ function appAlert(message, opts = {}) { return appDialogManager(message, {...opt
     }
 
     async function permanentlyDeleteFromTrash(anillo) {
-        if (!await appConfirm('¿Eliminar permanentemente esta paloma? Esta acción no se puede deshacer.')) return;
+        const item = trash.find(t => t.anillo === anillo);
+        const subject = item && item.type === 'pair' ? 'esta pareja' : 'esta paloma';
+        if (!await appConfirm(`¿Eliminar permanentemente ${subject}? Esta acción no se puede deshacer.`)) return;
         trash = trash.filter(t => t.anillo !== anillo);
         saveTrash(); renderTrash();
         showToast('Paloma eliminada permanentemente', 'success');
@@ -2458,17 +2476,17 @@ function appAlert(message, opts = {}) { return appDialogManager(message, {...opt
                 activePairs[idx].father = father;
                 activePairs[idx].mother = mother;
                 activePairs[idx].notes = notes;
-                // guardar fecha de puesta y calcular fecha de eclosión (+18 días)
+                // Calcular eclosión en fecha local, evitando desfases por UTC.
                 if (fechaPuesta) {
                     activePairs[idx].fechaPuesta = fechaPuesta;
-                    const hatchAt = new Date(fechaPuesta);
-                    hatchAt.setDate(hatchAt.getDate() + 18);
-                    activePairs[idx].hatchAt = hatchAt.getTime();
+                    activePairs[idx].hatchAt = getHatchTimestamp(fechaPuesta);
                     activePairs[idx].hatchNotified = false;
                     activePairs[idx].hatchDone = false;
                 } else {
                     delete activePairs[idx].fechaPuesta;
                     delete activePairs[idx].hatchAt;
+                    delete activePairs[idx].hatchNotified;
+                    delete activePairs[idx].hatchDone;
                 }
                 localStorage.setItem('activePairs', JSON.stringify(activePairs));
                 // Programar notificación nativa si corresponde
@@ -2490,9 +2508,7 @@ function appAlert(message, opts = {}) { return appDialogManager(message, {...opt
         const newPair = { id, father, mother, notes };
         if (fechaPuesta) {
             newPair.fechaPuesta = fechaPuesta;
-            const hatchAt = new Date(fechaPuesta);
-            hatchAt.setDate(hatchAt.getDate() + 20);
-            newPair.hatchAt = hatchAt.getTime();
+            newPair.hatchAt = getHatchTimestamp(fechaPuesta);
             newPair.hatchNotified = false;
             newPair.hatchDone = false;
         }
@@ -2544,14 +2560,11 @@ function appAlert(message, opts = {}) { return appDialogManager(message, {...opt
 
         // Añadir entrada en la papelera (tipo 'pair')
         try {
-            const trashedPair = {
+            const trashedPair = Object.assign({}, pair, {
                 anillo: id,
                 type: 'pair',
-                father: pair.father,
-                mother: pair.mother,
-                notes: pair.notes || '',
                 deletedAt: Date.now()
-            };
+            });
 
             const existingIndex = trash.findIndex(t => t.anillo === id);
             if (existingIndex !== -1) {
@@ -3778,7 +3791,17 @@ async function exportData() {
         }
         return;
     }
-    const dataToExport = { breeder: breederInfo, pigeons: pigeons, activePairs: activePairs, activePairId: activePairId || null };
+    let velocityData = null;
+    try { velocityData = JSON.parse(localStorage.getItem('palomas_pro_velocidades_v1') || 'null'); }
+    catch (e) { console.warn('No se pudieron leer las velocidades para el respaldo', e); }
+    const dataToExport = {
+        breeder: breederInfo,
+        pigeons: pigeons,
+        activePairs: activePairs,
+        activePairId: activePairId || null,
+        trash: trash,
+        velocities: velocityData
+    };
     const dataStr = JSON.stringify(dataToExport, null, 2);
     const date = new Date().toISOString().split('T')[0];
     const fileName = `backup_palomas_${date}.json`;
@@ -3892,12 +3915,22 @@ async function exportData() {
                     // Soporte para formato antiguo (solo array de palomas)
                     importedPigeons = importedData;
                     importedBreederInfo = {};
-                } else if (importedData.pigeons) {
+                } else if (importedData && Array.isArray(importedData.pigeons)) {
                     // Soporte para formato nuevo (objeto con palomas y criador)
                     importedPigeons = importedData.pigeons;
                     importedBreederInfo = importedData.breeder || {};
                 } else {
                     throw new Error("El archivo no contiene un formato de datos de palomas válido.");
+                }
+                if (!Array.isArray(importedPigeons)) throw new Error('La lista de palomas no es válida.');
+                if (importedData && Object.prototype.hasOwnProperty.call(importedData, 'trash') && !Array.isArray(importedData.trash)) {
+                    throw new Error('La papelera incluida en el respaldo no es válida.');
+                }
+                if (importedData && Object.prototype.hasOwnProperty.call(importedData, 'velocities')) {
+                    const v = importedData.velocities;
+                    if (v !== null && (!v || typeof v !== 'object' || !Array.isArray(v.birds) || !Array.isArray(v.trainings))) {
+                        throw new Error('Los datos de Velocidades Individuales del respaldo no son válidos.');
+                    }
                 }
 
                 pigeons = importedPigeons;
@@ -3917,6 +3950,19 @@ async function exportData() {
                     localStorage.removeItem('activePairId');
                 }
 
+                // Respaldos nuevos restauran papelera y velocidades. Los antiguos
+                // no traían estos campos, así que se conservan los datos actuales.
+                if (importedData && Object.prototype.hasOwnProperty.call(importedData, 'trash')) {
+                    trash = importedData.trash;
+                    saveTrash();
+                }
+                let velocityRestoreOk = true;
+                if (importedData && Object.prototype.hasOwnProperty.call(importedData, 'velocities')) {
+                    velocityRestoreOk = typeof window.restorePalomasProVelocities === 'function'
+                        ? window.restorePalomasProVelocities(importedData.velocities)
+                        : false;
+                }
+
                 saveData();
                 localStorage.setItem('breederInfo', JSON.stringify(importedBreederInfo));
 
@@ -3925,7 +3971,7 @@ async function exportData() {
                 updateActivePairSelects();
                 try { scheduleAllNativeHatches(); } catch (e) { console.warn('schedule after import', e); }
                 
-                const successMsg = `Datos restaurados con éxito. Se cargaron ${pigeons.length} palomas. y ${activePairs.length} parejas activas.`;
+                const successMsg = `Datos restaurados con éxito. Se cargaron ${pigeons.length} palomas y ${activePairs.length} parejas activas.${velocityRestoreOk ? '' : ' No se pudieron restaurar las velocidades.'}`;
                 
                 showToast(successMsg, 'success');
                 showPigeonTable();
@@ -5436,6 +5482,22 @@ const $=id=>document.getElementById(id);
 let state={trainings:[],currentTrainingId:null,distance:'',birds:INITIAL.map(number=>({number,start:'',arrival:''}))};
 try{const saved=JSON.parse(localStorage.getItem(KEY));if(saved&&Array.isArray(saved.birds)&&saved.birds.every(b=>b&&typeof b.number==='string'&&typeof b.start==='string'&&typeof b.arrival==='string'))state={distance:String(saved.distance??''),birds:saved.birds,trainings:Array.isArray(saved.trainings)?saved.trainings.filter(t=>t&&typeof t.id==='string'&&Array.isArray(t.results)&&t.results.every(r=>r&&typeof r.number==='string'&&Number.isFinite(r.speed)&&r.speed>0)):[],currentTrainingId:typeof saved.currentTrainingId==='string'?saved.currentTrainingId:null};}catch(e){$('save').textContent='No se pudieron recuperar los datos guardados.';$('save').hidden=false;}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state));$('save').textContent='';$('save').hidden=true;$('save').classList.remove('error');return true;}catch(e){$('save').textContent='No se pudieron guardar los datos. Descarga tus resultados antes de cerrar.';$('save').classList.add('error');$('save').hidden=false;return false;}}
+window.restorePalomasProVelocities=function(saved){
+  const previous=state;
+  if(saved===null){state={distance:'',birds:[],trainings:[],currentTrainingId:null};}
+  else{
+    if(!saved||!Array.isArray(saved.birds)||!saved.birds.every(b=>b&&typeof b.number==='string'&&typeof b.start==='string'&&typeof b.arrival==='string')||!Array.isArray(saved.trainings))return false;
+    state={
+      distance:String(saved.distance??''),
+      birds:saved.birds,
+      trainings:saved.trainings.filter(t=>t&&typeof t.id==='string'&&Array.isArray(t.results)&&t.results.every(r=>r&&typeof r.number==='string'&&Number.isFinite(r.speed)&&r.speed>0)),
+      currentTrainingId:typeof saved.currentTrainingId==='string'?saved.currentTrainingId:null
+    };
+  }
+  $('distance').value=state.distance;
+  if(!save()){state=previous;$('distance').value=state.distance;return false;}
+  syncFlightBirds();drawRows();drawWeekly();update();return true;
+};
 function distanceMeters(){const raw=state.distance.trim().replace(',','.');return /^\d+(?:\.\d+)?$/.test(raw)&&Number(raw)>0?Number(raw)*1000:NaN;}
 function normalizeTime(value){const raw=value.trim();if(/^\d{3,4}$/.test(raw)){const digits=raw.padStart(4,'0');return digits.slice(0,2)+':'+digits.slice(2);}if(/^\d{6}$/.test(raw))return raw.slice(0,2)+':'+raw.slice(2,4)+':'+raw.slice(4);if(/^\d{1,2}:\d{2}(?::\d{2})?$/.test(raw))return raw.padStart(raw.length===4?5:raw.length===7?8:raw.length,'0');return raw;}
 function seconds(value){if(!/^\d{2}:\d{2}(?::\d{2})?$/.test(value))return NaN;const [h,m,s=0]=value.split(':').map(Number);return h<24&&m<60&&s<60?h*3600+m*60+s:NaN;}
