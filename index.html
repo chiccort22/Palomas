@@ -875,15 +875,19 @@ body.inflight-mode #pigeonTableSection > table, body.my-pigeons-mode #pigeonTabl
 .flight-item {position:relative; overflow:hidden; overflow:clip; height:72px; border-bottom:1px solid var(--border); background:var(--card); touch-action:pan-y; isolation:isolate; contain:paint;}
 .flight-item:nth-child(even) {background:var(--bg);}
 .flight-actions {position:absolute; top:0; right:0; bottom:0; width:172px; display:flex; z-index:0; clip-path:inset(0 0 0 0);}
-.flight-actions button {width:86px; border:0; color:white; font-size:12px; font-weight:600; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; padding:5px;}
+.flight-actions button {flex:0 0 86px; border:0; color:white; font-size:11px; font-weight:600; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; padding:5px 2px;}
 .flight-actions .flight-remove {background:#25865d;}
 .flight-actions .flight-add {background:#25865d;}
 .flight-actions .flight-delete {background:#df4848;}
+.flight-archive-reveal {position:absolute;left:0;top:0;bottom:0;width:88px;z-index:0;border:0;background:#536d86;color:#fff;font-size:11px;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:5px;}
+.flight-item.archive-open .flight-archive-reveal {z-index:2;}
+.flight-archive-reveal i {font-size:21px}
 .flight-actions i {font-size:21px;}
 .flight-front {position:relative; z-index:1; height:100%; width:100%; display:grid; grid-template-columns:22% 29% 13% 12% 24%; align-items:center; background:var(--card); color:var(--text); transition:transform .22s ease; padding:0 8px; will-change:transform;}
 .flight-item:nth-child(even) .flight-front {background:var(--bg);}
 .flight-front > span {padding:0 5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:15px;}
 .flight-item.open .flight-front {transform:translateX(-172px);}
+.flight-item.archive-open .flight-front {transform:translateX(88px);}
 .swipe-details-panel {background:var(--bg);padding:8px 10px;border-bottom:2px solid var(--accent);}
 .swipe-details-panel .details-row-content {padding:12px 8px;}
 
@@ -973,10 +977,12 @@ body:not(.my-pigeons-mode):not(.inflight-mode) #birdViewSwitcher{display:none}
 #flightSwipeList.bird-grid .benz-sub{font-size:12px}
 #flightSwipeList.bird-grid .benz-extra{font-size:11px}
 #flightSwipeList.bird-grid .benz-more{position:absolute;right:9px;top:12px;z-index:2;background:#4b5057bb;color:#fff;border-radius:10px;width:35px;height:38px}
-#flightSwipeList.bird-grid .flight-actions{width:100%;height:74px;top:auto;bottom:0;right:0;z-index:3;visibility:hidden}
-#flightSwipeList.bird-grid .flight-actions button{flex:1;width:50%;font-size:11px}
+#flightSwipeList.bird-grid .flight-actions{width:100%;height:84px;top:auto;bottom:0;right:0;z-index:3;visibility:hidden}
+#flightSwipeList.bird-grid .flight-actions button{flex:1 1 50%;width:50%;font-size:11px}
 #flightSwipeList.bird-grid .flight-item.open .flight-actions{visibility:visible}
 #flightSwipeList.bird-grid .flight-item.open .flight-front{transform:none!important}
+#flightSwipeList.bird-grid .archived-item.open .flight-actions{width:100%;height:74px}
+#flightSwipeList.bird-grid .flight-item.archive-open .flight-front{transform:translateX(88px)!important}
 #flightSwipeList.bird-grid .flight-item.open .benz-info{visibility:hidden}
 #flightSwipeList.bird-grid .flight-total{grid-column:1/-1}
 #flightSwipeList.bird-grid .swipe-details-panel{grid-column:1/-1;min-width:0;width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:14px;margin:0 0 8px;overflow:hidden}
@@ -1392,9 +1398,11 @@ th,
 
 </style></head>
 <body onload="checkBreederInfo()">
+<div id="photoStorageGate" role="status" aria-live="polite" style="position:fixed;inset:0;z-index:30000;display:grid;place-items:center;padding:24px;background:#f4f7f6;color:#333;font:600 16px system-ui,sans-serif;text-align:center"><span>Preparando las fotos guardadas…</span></div>
 
     <div id="sidebar">
         <a href="javascript:void(0)" onclick="showPigeonTable()"><i class="fas fa-table"></i> Mis Palomas <span class="sidebar-count" id="count-mis">0</span></a>
+        <a href="javascript:void(0)" onclick="openArchivedPigeons()"><i class="fas fa-archive"></i> Archivadas <span class="sidebar-count" id="count-archived">0</span></a>
         <a href="javascript:void(0)" onclick="openInFlightPigeons()"><i class="fas fa-wind"></i> En Vuelo <span class="sidebar-count" id="count-inflight">0</span></a>
         <a href="javascript:void(0)" onclick="openActivePairs()"><i class="fas fa-heart"></i> Parejas Activas <span class="sidebar-count" id="count-pairs">0</span></a>
     <a href="javascript:void(0)" onclick="showView('quick-results')"><i class="fas fa-trophy"></i> Reg. Resultados</a>
@@ -2194,8 +2202,136 @@ function appAlert(message, opts = {}) { return appDialogManager(message, {...opt
     // --- PAPELERA: almacenamiento (soft-delete) ---
     let trash = JSON.parse(localStorage.getItem('trash')) || [];
 
+    // Las fotos viven en IndexedDB; localStorage conserva solo sus identificadores.
+    const PHOTO_DB_NAME = 'PalomasProPhotos';
+    const PHOTO_DB_STORE = 'photos';
+    const PHOTO_DATA_URL = /^data:image\/(?:jpeg|png|webp);base64,/;
+    let photoDbPromise = null;
+    let photoWriteQueue = Promise.resolve();
+    let photoStorageAvailable = false;
+    let photoStorageGate = document.getElementById('photoStorageGate');
+
+    function openPhotoDatabase() {
+        if (photoDbPromise) return photoDbPromise;
+        photoDbPromise = new Promise((resolve, reject) => {
+            if (!('indexedDB' in window)) { reject(new Error('IndexedDB no está disponible')); return; }
+            const request = indexedDB.open(PHOTO_DB_NAME, 1);
+            request.onupgradeneeded = () => {
+                const db = request.result;
+                if (!db.objectStoreNames.contains(PHOTO_DB_STORE)) db.createObjectStore(PHOTO_DB_STORE, {keyPath:'id'});
+            };
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error || new Error('No se pudo abrir IndexedDB'));
+            request.onblocked = () => reject(new Error('IndexedDB está ocupado por otra ventana de Palomas Pro'));
+        });
+        return photoDbPromise;
+    }
+
+    function makePhotoId() {
+        return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'foto_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    }
+
+    function photoRecords() {
+        return [...pigeons, ...trash.filter(item => item.type !== 'pair')];
+    }
+
+    function stripPhotoData(records) {
+        return records.map(record => {
+            const copy = Object.assign({}, record);
+            if (PHOTO_DATA_URL.test(String(copy.foto || ''))) {
+                if (!copy.fotoId) copy.fotoId = makePhotoId();
+                if (record && typeof record === 'object') record.fotoId = copy.fotoId;
+            } else if (!copy.fotoId) {
+                delete copy.fotoId;
+            }
+            delete copy.foto;
+            return copy;
+        });
+    }
+
+    function storePhotoRecords(records, prune = false) {
+        return openPhotoDatabase().then(db => new Promise((resolve, reject) => {
+            const tx = db.transaction(PHOTO_DB_STORE, 'readwrite');
+            const store = tx.objectStore(PHOTO_DB_STORE);
+            const refs = new Set();
+            const photos = [];
+            records.forEach(record => {
+                if (PHOTO_DATA_URL.test(String(record.foto || ''))) {
+                    if (!record.fotoId) record.fotoId = makePhotoId();
+                    refs.add(record.fotoId);
+                    photos.push({id:record.fotoId, data:record.foto});
+                } else if (record.fotoId) refs.add(record.fotoId);
+            });
+            if (prune) {
+                // Las escrituras esperan la lectura de claves para no competir con el borrado.
+                const keys = store.getAllKeys();
+                keys.onsuccess = () => {
+                    keys.result.forEach(key => { if (!refs.has(key)) store.delete(key); });
+                    photos.forEach(photo => store.put(photo));
+                };
+                keys.onerror = () => { try { tx.abort(); } catch (_) {} };
+            } else photos.forEach(photo => store.put(photo));
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error || new Error('No se pudieron guardar las fotos'));
+            tx.onabort = () => reject(tx.error || new Error('Se canceló el guardado de fotos'));
+        }));
+    }
+
+    function readPhoto(id) {
+        return openPhotoDatabase().then(db => new Promise((resolve, reject) => {
+            const tx = db.transaction(PHOTO_DB_STORE, 'readonly');
+            const request = tx.objectStore(PHOTO_DB_STORE).get(id);
+            request.onsuccess = () => resolve(request.result ? request.result.data : '');
+            request.onerror = () => reject(request.error || new Error('No se pudo leer una foto'));
+        }));
+    }
+
+    function persistPhotoLocalRefs() {
+        localStorage.setItem('misPalomas', JSON.stringify(stripPhotoData(pigeons)));
+        localStorage.setItem('trash', JSON.stringify(stripPhotoData(trash)));
+    }
+
+    function persistPhotoStore() {
+        const job = photoWriteQueue.then(async () => {
+            await storePhotoRecords(photoRecords(), true);
+            persistPhotoLocalRefs();
+        });
+        photoWriteQueue = job.catch(() => {});
+        return job;
+    }
+
+    async function initializePhotoStorage() {
+        const gate = photoStorageGate;
+        try {
+            await openPhotoDatabase();
+            photoStorageAvailable = true;
+            const records = photoRecords();
+            // Migrar fotos que ya estaban guardadas en localStorage.
+            await storePhotoRecords(records, false);
+            // Recuperar las fotos migradas al estado en memoria para las vistas actuales.
+            for (const record of records) {
+                if (!PHOTO_DATA_URL.test(String(record.foto || '')) && record.fotoId) {
+                    record.foto = await readPhoto(record.fotoId);
+                    if (!record.foto) delete record.fotoId;
+                }
+            }
+            await storePhotoRecords(records, true);
+            persistPhotoLocalRefs();
+            return true;
+        } catch (error) {
+            photoStorageAvailable = false;
+            console.warn('IndexedDB para fotos:', error);
+            return false;
+        } finally {
+            if (gate) { gate.hidden = true; gate.style.display = 'none'; }
+        }
+    }
+
+    const photoStorageReady = initializePhotoStorage();
+
     function saveTrash() {
-        try { localStorage.setItem('trash', JSON.stringify(trash)); } catch (e) { console.warn('No se pudo guardar la papelera', e); }
+        try { localStorage.setItem('trash', JSON.stringify(photoStorageAvailable ? stripPhotoData(trash) : trash)); } catch (e) { console.warn('No se pudo guardar la papelera', e); }
+        if (photoStorageAvailable) persistPhotoStore().catch(e => { console.warn(e); showToast('No se pudieron guardar las fotos de la papelera.', 'error'); });
         try { updateSidebarCounts(); } catch (e) { /* noop */ }
     }
 
@@ -3228,7 +3364,7 @@ if (window.Android) {
 
         // Control FAB visibility and title
         document.body.classList.remove('hide-fab');
-        if (viewName === 'register' || viewName === 'backup' || viewName === 'breeder' || viewName === 'pedigree-view' || viewName === 'trash' || viewName === 'velocities' || viewName === 'quick-results') {
+        if (viewName === 'register' || viewName === 'backup' || viewName === 'breeder' || viewName === 'pedigree-view' || viewName === 'trash' || viewName === 'archived' || viewName === 'velocities' || viewName === 'quick-results') {
             document.body.classList.add('hide-fab');
         }
 
@@ -3253,6 +3389,10 @@ if (window.Android) {
         } else if (viewName === 'inflight') {
             pigeonTableSection.style.display = 'block';
             headerTitle = "Palomas En Vuelo";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else if (viewName === 'archived') {
+            pigeonTableSection.style.display = 'block';
+            headerTitle = 'Palomas Archivadas';
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } else if (viewName === 'register') {
             formContainer.style.display = 'block';
@@ -3306,7 +3446,7 @@ if (window.Android) {
         }
 
         document.body.classList.toggle('inflight-mode', viewName === 'inflight');
-        document.body.classList.toggle('my-pigeons-mode', viewName === 'table');
+        document.body.classList.toggle('my-pigeons-mode', viewName === 'table' || viewName === 'archived');
         closeFlightActions();
         // ¡ACTUALIZA EL TÍTULO DEL HEADER!
         headerTitleEl.innerText = headerTitle; 
@@ -3321,6 +3461,8 @@ if (window.Android) {
                 setHeaderBack(true, function(){ cancelEdit(); });
             } else if (viewName === 'pedigree-picker' || viewName === 'pedigree-view') {
                 // En Pedigrí, la flecha vuelve a la lista principal
+                setHeaderBack(true, function(){ showPigeonTable(); });
+            } else if (viewName === 'archived') {
                 setHeaderBack(true, function(){ showPigeonTable(); });
             } else {
                 setHeaderBack(false);
@@ -3360,6 +3502,14 @@ if (window.Android) {
         currentClickMode = 'details';
         showView('inflight');
         if(isEditing) cancelEdit();
+        renderTable();
+        closeNav();
+    }
+
+    function openArchivedPigeons() {
+        currentClickMode = 'details';
+        if (isEditing) cancelEdit();
+        showView('archived');
         renderTable();
         closeNav();
     }
@@ -3441,6 +3591,9 @@ function openRegisterForm() {
             
             case 'inflight':
                 openInFlightPigeons();
+                break;
+            case 'archived':
+                openArchivedPigeons();
                 break;
             case 'breeder':
                 openBreederInfo(true);
@@ -3641,7 +3794,7 @@ function openRegisterForm() {
 
     // --- LÓGICA DE FORMULARIO (Crear y Editar) ---
 
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     // Validar antes de procesar
@@ -3677,6 +3830,9 @@ function openRegisterForm() {
         madreManualLinea: madreManualActivo ? document.getElementById('madreManualLineaInput').value.trim() : '',
         madreManualNotas: madreManualActivo ? document.getElementById('madreManualNotasInput').value.trim() : ''
     };
+    const existingPhotoRecord = isEditing ? pigeons.find(p => p.anillo === originalAnillo) : null;
+    if (pigeonPhotoValue && existingPhotoRecord && existingPhotoRecord.fotoId) pigeonData.fotoId = existingPhotoRecord.fotoId;
+    if (existingPhotoRecord && existingPhotoRecord.archivedAt) pigeonData.archivedAt = existingPhotoRecord.archivedAt;
 
     // Si se está usando una pareja activa (aplicada previamente con "Usar en Registro"), forzar padres, año y sexo
     if (isUsingActivePair()) {
@@ -3734,7 +3890,16 @@ if (window.Android) {
             }
             
             // 2. Actualizar los datos de la paloma actual.
+            const previousPigeon = pigeons[index];
             pigeons[index] = pigeonData;
+            if (photoStorageAvailable) {
+                try { await persistPhotoStore(); }
+                catch (error) {
+                    pigeons[index] = previousPigeon;
+                    showToast('No se pudo guardar la fotografía. La paloma conserva sus datos anteriores.', 'error');
+                    return;
+                }
+            }
             
 if (window.Android) {
     window.Android.showToast('Paloma actualizada correctamente');
@@ -3762,6 +3927,14 @@ if (window.Android) {
             return;
         }
         pigeons.push(pigeonData);
+        if (photoStorageAvailable) {
+            try { await persistPhotoStore(); }
+            catch (error) {
+                pigeons.pop();
+                showToast('No se pudo guardar la fotografía. Inténtalo de nuevo.', 'error');
+                return;
+            }
+        }
 if (window.Android) {
     window.Android.showToast('Paloma registrada');
 } else {
@@ -3781,6 +3954,8 @@ if (window.Android) {
 
 // --- LÓGICA DE BACKUP/RESTORE ---
 async function exportData() {
+    await photoStorageReady;
+    try { await photoWriteQueue; } catch (_) {}
     if (pigeons.length === 0) {
         // [MODIFICACIÓN] Adaptar mensaje para entorno Android
         if (window.Android) {
@@ -3904,7 +4079,7 @@ async function exportData() {
     function processFileContent(file, eTarget) {
         const reader = new FileReader();
         
-        reader.onload = function(e) {
+        reader.onload = async function(e) {
             let importedData;
             try {
                 importedData = JSON.parse(e.target.result);
@@ -3954,8 +4129,9 @@ async function exportData() {
                 // no traían estos campos, así que se conservan los datos actuales.
                 if (importedData && Object.prototype.hasOwnProperty.call(importedData, 'trash')) {
                     trash = importedData.trash;
-                    saveTrash();
                 }
+                if (photoStorageAvailable) await persistPhotoStore();
+                if (importedData && Object.prototype.hasOwnProperty.call(importedData, 'trash')) saveTrash();
                 let velocityRestoreOk = true;
                 if (importedData && Object.prototype.hasOwnProperty.call(importedData, 'velocities')) {
                     velocityRestoreOk = typeof window.restorePalomasProVelocities === 'function'
@@ -3996,7 +4172,7 @@ async function exportData() {
     function prepareEdit(anillo, fromProfile = false) {
         const p = pigeons.find(item => item.anillo === anillo);
         if(!p) return;
-        const sourceView = currentView === 'inflight' ? 'inflight' : 'table';
+        const sourceView = currentView === 'inflight' ? 'inflight' : currentView === 'archived' ? 'archived' : 'table';
         pigeonEditReturn = {
             view: sourceView,
             profile: !!fromProfile,
@@ -4139,7 +4315,7 @@ function returnAfterPigeonEdit(anillo, context, openProfile) {
     const pigeon = pigeons.find(p => String(p.anillo) === String(anillo));
     // Si dejó de estar En Vuelo, su ficha debe regresar a Mis Palomas.
     const stillInFlight = pigeon && (pigeon.tag === 'En Vuelo' || pigeon.etiqueta === 'En Vuelo');
-    const destination = saved.view === 'inflight' && stillInFlight ? 'inflight' : 'table';
+    const destination = saved.view === 'archived' && pigeon && pigeon.archivedAt ? 'archived' : saved.view === 'inflight' && stillInFlight ? 'inflight' : 'table';
     showView(destination);
     renderTable();
     if (openProfile && pigeon) {
@@ -4178,6 +4354,41 @@ function cancelEdit() {
         appConfirm(message, {danger:true, title:'Mover a la papelera', acceptText:'Mover a papelera'})
             .then(ok => { if (ok) proceedToDelete(); });
     }
+
+    function archivePigeon(anillo) {
+        const bird = pigeons.find(p => String(p.anillo) === String(anillo));
+        if (!bird || bird.archivedAt) return;
+        bird.archivedAt = Date.now();
+        try {
+            saveData();
+            updateSelects();
+            updateActivePairSelects();
+            populateQuickResultBirds();
+            renderTable();
+            if (typeof pigeonProfileOverlay !== 'undefined' && !pigeonProfileOverlay.hidden && String(pigeonProfileRing) === String(anillo)) closePigeonProfile();
+            showToast('Paloma archivada. Puedes restaurarla desde Archivadas.', 'success');
+        } catch (error) {
+            delete bird.archivedAt;
+            showToast('No se pudo archivar la paloma.', 'error');
+        }
+    }
+
+    function restoreArchivedPigeon(anillo) {
+        const bird = pigeons.find(p => String(p.anillo) === String(anillo));
+        if (!bird || !bird.archivedAt) return;
+        delete bird.archivedAt;
+        try {
+            saveData();
+            updateSelects();
+            updateActivePairSelects();
+            populateQuickResultBirds();
+            renderTable();
+            showToast('Paloma restaurada a Mis Palomas.', 'success');
+        } catch (error) {
+            bird.archivedAt = Date.now();
+            showToast('No se pudo restaurar la paloma.', 'error');
+        }
+    }
     
     // --- LÓGICA DE DETALLES DE FILA (MEJORADA) ---
 
@@ -4202,7 +4413,7 @@ function cancelEdit() {
             pigeonProfileHistory.push({ring:pigeonProfileRing, tab:pigeonProfileTab});
         }
         if (!fromPedigree && pigeonProfileOverlay.hidden) {
-            pigeonProfileOrigin = currentView === 'inflight' ? 'inflight' : 'table';
+            pigeonProfileOrigin = currentView === 'inflight' ? 'inflight' : currentView === 'archived' ? 'archived' : 'table';
             pigeonProfileListScroll = window.scrollY;
         }
         pigeonProfileRing = p.anillo;
@@ -4330,6 +4541,7 @@ function cancelEdit() {
         // La flecha de la vista original del pedigrí regresa a esta ficha.
         setHeaderBack(true, function() {
             if (origin === 'inflight') openInFlightPigeons();
+            else if (origin === 'archived') openArchivedPigeons();
             else showPigeonTable();
             pigeonProfileOrigin = origin;
             pigeonProfileListScroll = savedScroll;
@@ -4589,6 +4801,9 @@ function buildDetailsContent(p) {
     const detailPhotoHtml = (p.foto && /^data:image\/(?:jpeg|png|webp);base64,/.test(p.foto))
         ? '<div class="pigeon-detail-photo-wrap"><img class="pigeon-detail-photo" src="' + p.foto + '" alt="Fotografía de la paloma" loading="lazy" onclick="openPigeonDetailPhoto(this.src)" title="Tocar para ampliar" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();openPigeonDetailPhoto(this.src)}"></div>'
         : '';
+    const archiveActionHtml = p.archivedAt
+        ? '<button class="btn btn-update" style="width:100%; margin-top:0;" onclick="event.stopPropagation(); restoreArchivedPigeon(\'' + p.anillo + '\');"><i class="fas fa-box-open"></i> Restaurar</button>'
+        : '<button class="btn btn-info" style="width:100%; margin-top:0; background-color:#536d86;" onclick="event.stopPropagation(); archivePigeon(\'' + p.anillo + '\');"><i class="fas fa-archive"></i> Archivar</button>';
     let html =
         '<div class="details-row-content" style="display: flex; flex-direction: column; gap: 20px;">' +
             detailPhotoHtml +
@@ -4610,14 +4825,15 @@ function buildDetailsContent(p) {
             '</div>' +
             pedigreeHtml +
             descendantsHtml + 
-            '<div style="display:flex; gap: 10px; padding-top: 10px; border-top: 1px dashed #ccc;">' +
-                '<button class="btn btn-update" style="width:50%; margin-top:0;" onclick="event.stopPropagation(); prepareEdit(\'' + p.anillo + '\'); closeNav();">' +
+            '<div style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; padding-top:10px; border-top:1px dashed #ccc;">' +
+                '<button class="btn btn-update" style="width:100%; margin-top:0;" onclick="event.stopPropagation(); prepareEdit(\'' + p.anillo + '\'); closeNav();">' +
                     '<i class="fas fa-edit"></i> Editar' +
                 '</button>' +
-                '<button class="btn btn-danger" style="width:50%; margin-top:0; background-color:var(--danger);" onclick="event.stopPropagation(); deletePigeon(\'' + p.anillo + '\'); closeNav();">' +
+                archiveActionHtml +
+                '<button class="btn btn-danger" style="width:100%; margin-top:0; background-color:var(--danger);" onclick="event.stopPropagation(); deletePigeon(\'' + p.anillo + '\'); closeNav();">' +
                     '<i class="fas fa-trash"></i> Eliminar' +
                 '</button>' +
-    '<button class="btn btn-info" style="width:50%; margin-top:0; background-color:var(--accent);" onclick="event.stopPropagation(); showPedigree(\'' + p.anillo + '\'); closeNav();">' +
+    '<button class="btn btn-info" style="grid-column:1/-1; width:100%; margin-top:0; background-color:var(--accent);" onclick="event.stopPropagation(); showPedigree(\'' + p.anillo + '\'); closeNav();">' +
         '<i class="fas fa-sitemap"></i> Pedigrí' +
     '</button>' +
             '</div>' +
@@ -4631,7 +4847,7 @@ function buildDetailsContent(p) {
     // --- LÓGICA DE TABLA Y RENDERIZADO (MEJORADA con Búsqueda) ---
 
     function closeFlightActions() {
-        document.querySelectorAll('.flight-item.open').forEach(el => el.classList.remove('open'));
+        document.querySelectorAll('.flight-item.open,.flight-item.archive-open').forEach(el => el.classList.remove('open','archive-open'));
     }
     // Preferencia visual independiente de los datos de las palomas.
     let birdViewMode = (()=>{try{return localStorage.getItem('palomasProBirdView')==='grid'?'grid':'list'}catch(e){return 'list'}})();
@@ -4702,21 +4918,29 @@ function buildDetailsContent(p) {
         const list = document.getElementById('flightSwipeList');
         if (!list) return;
         list.replaceChildren();
-        if (currentView !== 'inflight' && currentView !== 'table') return;
+        if (currentView !== 'inflight' && currentView !== 'table' && currentView !== 'archived') return;
         if (!items.length) {
             const empty = document.createElement('p');
-            empty.textContent = currentView === 'inflight' ? 'No hay palomas En Vuelo.' : 'No hay palomas registradas.';
+            empty.textContent = currentView === 'inflight' ? 'No hay palomas En Vuelo.' : currentView === 'archived' ? 'No hay palomas archivadas.' : 'No hay palomas registradas.';
             empty.style.cssText = 'padding:24px;text-align:center';
             list.append(empty);
             return;
         }
         items.forEach(p => {
-            const item = document.createElement('div'); item.className='flight-item'; item.dataset.anillo=p.anillo;
+            const item = document.createElement('div'); item.className='flight-item'; if(currentView==='archived')item.classList.add('archived-item'); item.dataset.anillo=p.anillo;
             const actions=document.createElement('div'); actions.className='flight-actions';
+            const currentTag = p.tag || p.etiqueta || '';
+            if (currentView === 'archived') {
+                const restore=document.createElement('button'); restore.type='button'; restore.className='flight-remove';
+                restore.innerHTML='<i class="fas fa-box-open"></i><span>Restaurar</span>';
+                restore.onclick=()=>{closeFlightActions();restoreArchivedPigeon(p.anillo);};
+                const del=document.createElement('button'); del.type='button'; del.className='flight-delete';
+                del.innerHTML='<i class="fas fa-trash"></i><span>Eliminar</span>';
+                del.onclick=()=>{closeFlightActions();deletePigeon(p.anillo);};
+                actions.append(restore,del);
+            } else {
             const remove=document.createElement('button'); remove.type='button'; remove.className='flight-remove';
             // La acción depende de la etiqueta real de esta paloma, no de la pestaña.
-            const hasFlightTag = p.tag === 'En Vuelo' || p.etiqueta === 'En Vuelo';
-            const currentTag = p.tag || p.etiqueta || '';
             remove.className = currentTag ? 'flight-remove' : 'flight-add';
             remove.innerHTML = currentTag
                 ? '<i class="fas fa-tags"></i><span>Cambiar etiqueta</span>'
@@ -4726,6 +4950,11 @@ function buildDetailsContent(p) {
             del.innerHTML='<i class="fas fa-trash"></i><span>Eliminar</span>';
             del.onclick=() => {closeFlightActions(); deletePigeon(p.anillo);};
             actions.append(remove,del);
+            }
+            const archiveReveal=document.createElement('button');archiveReveal.type='button';archiveReveal.className='flight-archive-reveal';
+            archiveReveal.innerHTML='<i class="fas fa-archive"></i><span>Archivar</span>';
+            archiveReveal.onclick=()=>{closeFlightActions();archivePigeon(p.anillo);};
+            if (currentView !== 'archived') item.append(archiveReveal);
             const front=document.createElement('div'); front.className='flight-front';
             const female=p.sexo==='Hembra', unknown=p.sexo!=='Hembra'&&p.sexo!=='Macho';
             front.style.setProperty('--bird-accent',unknown?'#9ba7b3':female?'#f29bb3':'#69c7ef');
@@ -4753,15 +4982,15 @@ function buildDetailsContent(p) {
             front.addEventListener('touchstart',e=>{if(e.touches.length!==1)return; x0=e.touches[0].clientX;y0=e.touches[0].clientY;started=true;moved=false;},{passive:true});
             front.addEventListener('touchmove',e=>{if(!started)return; const dx=e.touches[0].clientX-x0,dy=e.touches[0].clientY-y0; if(Math.abs(dx)>14&&Math.abs(dx)>Math.abs(dy)*1.2)moved=true;},{passive:true});
             front.addEventListener('touchend',e=>{if(!started)return;started=false; const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;
-                if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.2){const wasOpen=item.classList.contains('open');closeFlightActions();if(dx<0&&!wasOpen)item.classList.add('open'); moved=true;setTimeout(()=>{moved=false},450);}
+                if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.2){const wasOpen=item.classList.contains('open'),wasArchiveOpen=item.classList.contains('archive-open');closeFlightActions();if(currentView!=='archived'&&dx>0&&!wasArchiveOpen)item.classList.add('archive-open');else if(dx<0&&!wasOpen)item.classList.add('open');moved=true;setTimeout(()=>{moved=false},450);}
             },{passive:true});
-            front.addEventListener('click',()=>{if(moved)return;if(item.classList.contains('open')){closeFlightActions();return;} toggleDetails(p.anillo);});
+            front.addEventListener('click',()=>{if(moved)return;if(item.classList.contains('open')||item.classList.contains('archive-open')){closeFlightActions();return;} toggleDetails(p.anillo);});
             item.append(actions,front);list.append(item);
         });
-        if (currentView === 'table' || currentView === 'inflight') {
+        if (currentView === 'table' || currentView === 'inflight' || currentView === 'archived') {
             const total=document.createElement('div');
             total.className='flight-total';
-            total.textContent=items.length+' PALOMAS';
+            total.textContent=items.length+(currentView==='archived'?' PALOMAS ARCHIVADAS':' PALOMAS');
             list.append(total);
         }
     }
@@ -4800,7 +5029,7 @@ function buildDetailsContent(p) {
                                 
             // Si estamos en una vista de etiquetas, filtrar según la etiqueta seleccionada
             // (Se eliminaron las vistas 'lost' y 'sold'; solo se mantiene 'inflight')
-            const viewMatch = (currentView === 'inflight') ? (p.tag === 'En Vuelo' || p.etiqueta === 'En Vuelo') : true;
+            const viewMatch = currentView === 'inflight' ? (p.tag === 'En Vuelo' || p.etiqueta === 'En Vuelo') : currentView === 'archived' ? !!p.archivedAt : !p.archivedAt;
 
             return sexMatch && yearMatch && searchMatch && viewMatch;
 
@@ -4822,7 +5051,7 @@ function buildDetailsContent(p) {
             const cell = row.insertCell();
             cell.colSpan = 6;
             cell.style.textAlign = 'center';
-            cell.innerText = query ? `No se encontraron resultados para "${currentSearchQuery}".` : "No hay palomas registradas que coincidan con el filtro.";
+            cell.innerText = query ? `No se encontraron resultados para "${currentSearchQuery}".` : currentView === 'archived' ? 'No hay palomas archivadas que coincidan con el filtro.' : "No hay palomas registradas que coincidan con el filtro.";
             try { updateSidebarCounts(); } catch (e) { /* noop */ }
             return;
         }
@@ -4963,10 +5192,10 @@ function buildDetailsContent(p) {
         const previous=sel.value;
         sel.replaceChildren();
         const empty=new Option('Seleccionar paloma…','');sel.add(empty);
-        pigeons.filter(p=>p.tag === 'En Vuelo').sort((a,b)=>String(a.anillo).localeCompare(String(b.anillo),undefined,{numeric:true})).forEach(p=>{
+        pigeons.filter(p=>!p.archivedAt && p.tag === 'En Vuelo').sort((a,b)=>String(a.anillo).localeCompare(String(b.anillo),undefined,{numeric:true})).forEach(p=>{
             sel.add(new Option(String(p.anillo)+(p.nombre?' — '+p.nombre:''),String(p.anillo)));
         });
-        if (pigeons.some(p=>p.tag === 'En Vuelo' && String(p.anillo)===previous)) sel.value=previous;
+        if (pigeons.some(p=>!p.archivedAt && p.tag === 'En Vuelo' && String(p.anillo)===previous)) sel.value=previous;
         updateQuickResultPreview();
     }
     function formatQuickResult() {
@@ -4999,7 +5228,8 @@ function buildDetailsContent(p) {
     });
 
     function saveData() {
-        localStorage.setItem('misPalomas', JSON.stringify(pigeons));
+        localStorage.setItem('misPalomas', JSON.stringify(photoStorageAvailable ? stripPhotoData(pigeons) : pigeons));
+        if (photoStorageAvailable) persistPhotoStore().catch(e => { console.warn('No se pudieron guardar las fotos', e); showToast('No se pudieron guardar las fotos. Conserva una copia de seguridad.', 'error'); });
         try { if (typeof window.syncFlightBirds === 'function') window.syncFlightBirds(); } catch(e) { console.warn(e); }
         try { updateSidebarCounts(); } catch (e) { /* noop */ }
     }
@@ -5007,8 +5237,9 @@ function buildDetailsContent(p) {
     // Actualiza los contadores visibles en el sidebar
     function updateSidebarCounts() {
         try {
-            const mis = Array.isArray(pigeons) ? pigeons.length : 0;
-            const inflight = pigeons.filter(p => p.tag === 'En Vuelo').length;
+            const mis = Array.isArray(pigeons) ? pigeons.filter(p => !p.archivedAt).length : 0;
+            const archived = Array.isArray(pigeons) ? pigeons.filter(p => !!p.archivedAt).length : 0;
+            const inflight = pigeons.filter(p => !p.archivedAt && p.tag === 'En Vuelo').length;
             const pairs = Array.isArray(activePairs) ? activePairs.length : 0;
 
             const set = (id, n) => {
@@ -5024,6 +5255,7 @@ function buildDetailsContent(p) {
             };
 
             set('count-mis', mis);
+            set('count-archived', archived);
             set('count-inflight', inflight);
             set('count-pairs', pairs);
 
@@ -5459,6 +5691,16 @@ function formatViewDate(dateStr) {
     return dateStr; // Si ya está formateada, la deja igual
 }
 
+photoStorageReady.then(ok => {
+    if (ok) {
+        renderTable();
+        renderTrash();
+        updateSidebarCounts();
+    } else {
+        showToast('No se pudieron preparar las fotos en IndexedDB. Se conservaron los datos existentes; crea una copia de seguridad.', 'error');
+    }
+});
+
 </script>
 
 <div id="toastContainer"></div>
@@ -5555,7 +5797,7 @@ function syncFlightBirds(){
   try { const stored=JSON.parse(localStorage.getItem('misPalomas')||'[]'); if(Array.isArray(stored)) source=stored; } catch(e) { console.warn('Palomas guardadas',e); }
   // Los cambios recientes todavía pueden estar en memoria antes de persistirse.
   try { if(typeof pigeons!=='undefined' && Array.isArray(pigeons)) source=pigeons; } catch(e) {}
-  const nums=[...new Set(source.filter(p=>[p.tag,p.etiqueta].some(v=>String(v||'').trim().toLocaleLowerCase()==='en vuelo')).map(p=>String(p.anillo||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'}));
+  const nums=[...new Set(source.filter(p=>!p.archivedAt && [p.tag,p.etiqueta].some(v=>String(v||'').trim().toLocaleLowerCase()==='en vuelo')).map(p=>String(p.anillo||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'}));
   const old=new Map(state.birds.map(b=>[b.number,b]));
   const next=nums.map(number=>old.get(number)||{number,start:'',arrival:''});
   if(JSON.stringify(next)!==JSON.stringify(state.birds)){state.birds=next;save();drawRows();}else update();
