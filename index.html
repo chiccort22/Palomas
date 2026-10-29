@@ -3885,24 +3885,25 @@ function openRegisterForm() {
     }
     
 // --- HEREDAR LÍNEA AUTOMÁTICAMENTE ---
-if (!pigeonData.linea || pigeonData.linea.trim() === "") {
-
-    let lineaPadre = "";
-    let lineaMadre = "";
-
+const normalizeLineage = (...values) => {
+    const seenLines = new Set();
+    return values.flatMap(value => String(value || '').split('/'))
+        .map(value => value.trim())
+        .filter(value => {
+            if (!value) return false;
+            const key = value.normalize('NFKC').replace(/\s+/g, ' ').toLocaleLowerCase('es');
+            if (seenLines.has(key)) return false;
+            seenLines.add(key);
+            return true;
+        }).join('/');
+};
+if (!pigeonData.linea) {
     const pPadre = pigeons.find(p => p.anillo === pigeonData.padre);
     const pMadre = pigeons.find(p => p.anillo === pigeonData.madre);
-
-    if (pPadre && pPadre.linea) lineaPadre = pPadre.linea;
-    if (pMadre && pMadre.linea) lineaMadre = pMadre.linea;
-
-    if (lineaPadre && lineaMadre) {
-        pigeonData.linea = `${lineaPadre}/${lineaMadre}`;
-    } else if (lineaPadre) {
-        pigeonData.linea = lineaPadre;
-    } else if (lineaMadre) {
-        pigeonData.linea = lineaMadre;
-    }
+    pigeonData.linea = normalizeLineage(pPadre && pPadre.linea, pMadre && pMadre.linea);
+} else {
+    // También limpia duplicados cuando se guarda una ficha que ya tenía la línea heredada.
+    pigeonData.linea = normalizeLineage(pigeonData.linea);
 }
 
     if (isEditing) {
